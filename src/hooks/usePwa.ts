@@ -129,9 +129,18 @@ export function usePwa() {
     applyAppIcon(selectedIcon);
   }, [selectedIcon, applyAppIcon]);
 
-  // Listener for display-mode media query & install events
+  // Listener for display-mode media query, SW registration & install events
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // Register Service Worker for full PWA installability
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        console.log('SW registered successfully:', reg.scope);
+      }).catch((err) => {
+        console.warn('SW registration error:', err);
+      });
+    }
 
     const mq = window.matchMedia('(display-mode: standalone)');
     const handleMQChange = (e: MediaQueryListEvent) => {
