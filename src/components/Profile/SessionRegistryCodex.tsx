@@ -292,12 +292,16 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
   // Logging Helper for exports
   const logExportAction = async (exportType: string, recordCount: number) => {
     const timestamp = Date.now();
+    const isPdf = exportType.toUpperCase().includes('PDF');
+    const actionMsg = isPdf ? 'PDF Report Exported' : 'Excel Report Exported';
+    const valNew = isPdf ? `Exported ${recordCount} records as PDF` : `Exported ${recordCount} records as Excel`;
+
     if (isOfflineSandbox) {
       if (onLogSandboxUpdate) {
         onLogSandboxUpdate(
-          `Export: ${exportType}`,
+          actionMsg,
           'N/A',
-          `${recordCount} records exported`,
+          valNew,
           'Sessions',
           { exportType, sourcePage: 'Sessions', timestamp, recordCount }
         );
@@ -311,9 +315,9 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
             'Authorization': `Bearer ${authToken}`
           },
           body: JSON.stringify({
-            action: `Export: ${exportType}`,
+            action: actionMsg,
             previousValue: 'N/A',
-            newValue: `${recordCount} records exported`,
+            newValue: valNew,
             source: 'Sessions',
             metadata: { exportType, sourcePage: 'Sessions', timestamp, recordCount }
           })
@@ -367,9 +371,8 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
     else if (totalTableLength > 100) tableFontSize = 7.5;
     else if (totalTableLength > 70) tableFontSize = 8.0;
 
-    let cellPadding = 2.5;
-    if (totalTableLength > 110) cellPadding = 1.6;
-    else if (totalTableLength > 80) cellPadding = 2.0;
+    // Consistent horizontal & vertical cell padding for readability and uniform column gaps (set to 1.5 to prevent truncation)
+    const cellPadding = { top: 1.5, right: 1.5, bottom: 1.5, left: 1.5 };
 
     // Use consistent 12mm page margin for layout alignment
     const pageMargin = 12;
@@ -378,41 +381,47 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
     // Calculate intelligent column widths to utilize full width without truncation or excessive blank columns
     const colWidthsConfig: { [key: number]: { cellWidth: number } } = {};
     
-    // 1. Raw weights based on contents
-    const rawWeights = headers.map((h, i) => {
-      const maxLen = colMaxLengths[i];
-      return Math.max(maxLen, h.length);
-    });
-
-    // 2. Define secure minimum widths to protect key info
-    const minWidths = headers.map((h) => {
-      const name = h.toUpperCase();
-      if (name.includes("STARTED") || name.includes("TIMESTAMP") || name.includes("TIME")) return 35;
-      if (name === "ACTION BY") return 22;
-      if (name.includes("DURATION")) return 20;
-      if (name.includes("STATUS")) return 18;
-      if (name.includes("OS")) return 18;
-      if (name.includes("BROWSER")) return 20;
-      if (name.includes("DEVICE")) return 22;
-      if (name.includes("CATEGORY")) return 24;
-      if (name.includes("ACTION")) return 25;
-      if (name.includes("VALUE")) return 30;
-      return 15;
-    });
-
-    const totalMinWidth = minWidths.reduce((sum, w) => sum + w, 0);
+    // Proportional to the maximum content length of each column to eliminate uneven spacing
+    const totalMaxLen = colMaxLengths.reduce((sum, len) => sum + len, 0);
+    const minColWidth = 15; // Minimum 15mm width for columns to avoid overly compressed headers
     
-    if (totalMinWidth >= totalWidth) {
-      headers.forEach((_, idx) => {
-        colWidthsConfig[idx] = { cellWidth: (minWidths[idx] / totalMinWidth) * totalWidth };
-      });
-    } else {
-      const totalWeight = rawWeights.reduce((sum, w) => sum + w, 0);
-      headers.forEach((_, idx) => {
-        const leftoverShare = (rawWeights[idx] / totalWeight) * (totalWidth - totalMinWidth);
-        colWidthsConfig[idx] = { cellWidth: minWidths[idx] + leftoverShare };
-      });
+    // Distribute proportional share, bounded with a minimum width of 15mm
+    let tempWidths = colMaxLengths.map(len => (len / totalMaxLen) * totalWidth);
+    
+    let adjustedWidths = [...tempWidths];
+    let needsAdjustment = true;
+    let iterations = 0;
+    while (needsAdjustment && iterations < 10) {
+      iterations++;
+      needsAdjustment = false;
+      let extraWidth = 0;
+      let flexibleColumnsSum = 0;
+      
+      for (let i = 0; i < adjustedWidths.length; i++) {
+        if (adjustedWidths[i] < minColWidth) {
+          extraWidth += (minColWidth - adjustedWidths[i]);
+          adjustedWidths[i] = minColWidth;
+          needsAdjustment = true;
+        } else {
+          flexibleColumnsSum += adjustedWidths[i];
+        }
+      }
+      
+      if (extraWidth > 0 && flexibleColumnsSum > 0) {
+        for (let i = 0; i < adjustedWidths.length; i++) {
+          if (adjustedWidths[i] > minColWidth) {
+            const reduction = (adjustedWidths[i] / flexibleColumnsSum) * extraWidth;
+            adjustedWidths[i] -= reduction;
+          }
+        }
+      }
     }
+
+    headers.forEach((_, idx) => {
+      colWidthsConfig[idx] = {
+        cellWidth: adjustedWidths[idx]
+      };
+    });
 
     const doc = new jsPDF({
       orientation: orientation,

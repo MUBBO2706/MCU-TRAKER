@@ -28,6 +28,51 @@ function getOriginalWikipediaUrl(url: string): string | null {
 
 
 
+
+function formatStatusLabel(status: string | undefined): string {
+  if (!status) return "Unwatched";
+  const s = status.toLowerCase();
+  if (s === "unwatched") return "Unwatched";
+  if (s === "completed") return "Completed";
+  if (s === "dropped") return "Dropped";
+  if (s === "watching") return "Watching";
+  if (s === "later") return "Later";
+  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+}
+
+function formatRatingLabel(rating: number | undefined): string {
+  if (!rating || rating <= 0) return "No Rating";
+  const filled = "★".repeat(rating);
+  const empty = "☆".repeat(5 - rating);
+  return filled + empty;
+}
+
+function formatToIndianDateTime(timestamp: number | string | Date | undefined): string {
+  if (!timestamp) return 'N/A';
+  const date = new Date(timestamp);
+  
+  const formatter = new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(date);
+  const partMap = parts.reduce((acc, part) => {
+    acc[part.type] = part.value;
+    return acc;
+  }, {} as Record<string, string>);
+
+  const monthStr = partMap.month || '';
+  const monthTitle = monthStr ? monthStr.charAt(0).toUpperCase() + monthStr.slice(1).toLowerCase() : '';
+  return `${partMap.day} ${monthTitle} ${partMap.year} ${partMap.hour}:${partMap.minute}:${partMap.second}`;
+}
+
 function addUpdateLog(userJson: any, log: {
   action: string;
   previousValue: string;
@@ -833,7 +878,7 @@ app.get("/api/auth/status", (req, res) => {
           addUpdateLog(userFile, {
             action: "Backup Restored",
             previousValue: "Previous state backup",
-            newValue: "Restored successfully",
+            newValue: `Backup Restored at ${formatToIndianDateTime(Date.now()).split(' ').slice(0, 3).join(' ')}`,
             source: "Settings",
             userPerformed: userFile.username,
             metadata: { restore: true }
@@ -851,28 +896,48 @@ app.get("/api/auth/status", (req, res) => {
             };
             const title = MCU_TITLES.find(m => m.id === movieId)?.title || movieId;
 
-            // 1. Status changed
-            if (newRecord.status && newRecord.status !== oldRecord.status) {
+            const statusChanged = newRecord.status && newRecord.status !== oldRecord.status;
+            const ratingChanged = newRecord.rating !== undefined && newRecord.rating !== oldRecord.rating;
+
+            if (statusChanged && ratingChanged) {
+              const oldStatusStr = formatStatusLabel(oldRecord.status);
+              const newStatusStr = formatStatusLabel(newRecord.status);
+              const oldRatingStr = formatRatingLabel(oldRecord.rating);
+              const newRatingStr = formatRatingLabel(newRecord.rating);
+
               addUpdateLog(userFile, {
-                action: `Watch Status: ${title}`,
-                previousValue: oldRecord.status.toUpperCase(),
-                newValue: newRecord.status.toUpperCase(),
+                action: `Watch Status / Rating: ${title}`,
+                previousValue: `${oldStatusStr} / ${oldRatingStr}`,
+                newValue: `${newStatusStr} / ${newRatingStr}`,
                 source: "Watch Status",
                 userPerformed: userFile.username,
                 metadata: { movieId }
               });
+            } else {
+              // 1. Status changed
+              if (statusChanged) {
+                addUpdateLog(userFile, {
+                  action: `Watch Status: ${title}`,
+                  previousValue: oldRecord.status.toUpperCase(),
+                  newValue: newRecord.status.toUpperCase(),
+                  source: "Watch Status",
+                  userPerformed: userFile.username,
+                  metadata: { movieId }
+                });
+              }
+              // 2. Rating changed
+              if (ratingChanged) {
+                addUpdateLog(userFile, {
+                  action: `Rating: ${title}`,
+                  previousValue: oldRecord.rating ? `${oldRecord.rating}★` : "No rating",
+                  newValue: `${newRecord.rating}★`,
+                  source: "Watch Status",
+                  userPerformed: userFile.username,
+                  metadata: { movieId }
+                });
+              }
             }
-            // 2. Rating changed
-            if (newRecord.rating !== undefined && newRecord.rating !== oldRecord.rating) {
-              addUpdateLog(userFile, {
-                action: `Rating: ${title}`,
-                previousValue: oldRecord.rating ? `${oldRecord.rating}★` : "No rating",
-                newValue: `${newRecord.rating}★`,
-                source: "Watch Status",
-                userPerformed: userFile.username,
-                metadata: { movieId }
-              });
-            }
+
             // 3. Favorite changed
             if (newRecord.favorite !== undefined && newRecord.favorite !== oldRecord.favorite) {
               addUpdateLog(userFile, {
@@ -950,6 +1015,9 @@ app.get("/api/auth/status", (req, res) => {
           for (const [key, val] of Object.entries(preferences)) {
             const oldVal = oldPreferences[key];
             if (val !== oldVal) {
+              if (key === "lastBackupAt" || key === "lastRestoreAt") {
+                continue; // Skip individual updates log for backup/restore dates
+              }
               const prefName = PREF_NAMES[key] || key.replace(/([A-Z])/g, ' $1').trim().replace(/^./, str => str.toUpperCase());
               const action = `${prefName} updated`;
               let source = "Preferences";

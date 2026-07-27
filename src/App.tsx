@@ -1302,6 +1302,25 @@ export default function App() {
     );
   }, [activeTheme, favoritePhase, favoriteCharacter, developerMode, orderingMode, isOfflineSandbox]);
 
+  // Helpers for watch status and rating label formatting in updates logs
+  const formatStatusLabel = (status: string | undefined): string => {
+    if (!status) return "Unwatched";
+    const s = status.toLowerCase();
+    if (s === "unwatched") return "Unwatched";
+    if (s === "completed") return "Completed";
+    if (s === "dropped") return "Dropped";
+    if (s === "watching") return "Watching";
+    if (s === "later") return "Later";
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+  };
+
+  const formatRatingLabel = (rating: number | undefined): string => {
+    if (!rating || rating <= 0) return "No Rating";
+    const filled = "★".repeat(rating);
+    const empty = "☆".repeat(5 - rating);
+    return filled + empty;
+  };
+
   // Update watch data for a movie
   const handleUpdateWatchData = (movieId: string, data: Partial<UserWatchData>) => {
     const prev = watchData[movieId] || {
@@ -1319,13 +1338,36 @@ export default function App() {
 
     if (isOfflineSandbox) {
       localStorage.setItem('mcu_tracker_watch_data', JSON.stringify(nextWatchData));
-      if (data.status && data.status !== prev.status) {
-        logSandboxUpdate(`Watch Status: ${fullTitle}`, prev.status.toUpperCase(), data.status.toUpperCase(), "Watch Status", { movieId });
-      } else if (data.rating !== undefined && data.rating !== prev.rating) {
-        logSandboxUpdate(`Rating: ${fullTitle}`, prev.rating ? `${prev.rating}★` : "No rating", `${data.rating}★`, "Watch Status", { movieId });
-      } else if (data.favorite !== undefined && data.favorite !== prev.favorite) {
+      
+      const statusChanged = data.status !== undefined && data.status !== prev.status;
+      const ratingChanged = data.rating !== undefined && data.rating !== prev.rating;
+
+      if (statusChanged && ratingChanged) {
+        const oldStatusStr = formatStatusLabel(prev.status);
+        const newStatusStr = formatStatusLabel(data.status);
+        const oldRatingStr = formatRatingLabel(prev.rating);
+        const newRatingStr = formatRatingLabel(data.rating);
+
+        logSandboxUpdate(
+          `Watch Status / Rating: ${fullTitle}`,
+          `${oldStatusStr} / ${oldRatingStr}`,
+          `${newStatusStr} / ${newRatingStr}`,
+          "Watch Status",
+          { movieId }
+        );
+      } else {
+        if (statusChanged) {
+          logSandboxUpdate(`Watch Status: ${fullTitle}`, prev.status.toUpperCase(), data.status.toUpperCase(), "Watch Status", { movieId });
+        }
+        if (ratingChanged) {
+          logSandboxUpdate(`Rating: ${fullTitle}`, prev.rating ? `${prev.rating}★` : "No rating", `${data.rating}★`, "Watch Status", { movieId });
+        }
+      }
+
+      if (data.favorite !== undefined && data.favorite !== prev.favorite) {
         logSandboxUpdate(`Favorite Status: ${fullTitle}`, prev.favorite ? "Favorited" : "Not Favorited", data.favorite ? "Favorited" : "Not Favorited", "Watch Status", { movieId });
-      } else if (data.notes !== undefined && data.notes !== prev.notes) {
+      }
+      if (data.notes !== undefined && data.notes !== prev.notes) {
         logSandboxUpdate(`Watch Notes: ${fullTitle}`, prev.notes || "No notes", data.notes || "No notes", "Watch Status", { movieId });
       }
     } else if (authToken) {
@@ -1486,7 +1528,7 @@ export default function App() {
             setUser(data.user);
           }
         } else if (isOfflineSandbox) {
-          logSandboxUpdate("Backup Restored", "Previous local sandbox data", "Restored successfully", "Settings", { restoredWatchCount, restoredAchievementsCount });
+          logSandboxUpdate("Backup Restored", "Previous local sandbox data", `Backup Restored at ${formatToIndianDateTime(Date.now()).split(' ').slice(0, 3).join(' ')}`, "Settings", { restoredWatchCount, restoredAchievementsCount });
         }
 
         // Complete!

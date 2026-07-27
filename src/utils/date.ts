@@ -22,5 +22,7 @@ export const formatToIndianDateTime = (timestamp: number | string | Date | undef
     return acc;
   }, {} as Record<string, string>);
 
-  return `${partMap.day} ${partMap.month.toUpperCase()} ${partMap.year} ${partMap.hour}:${partMap.minute}:${partMap.second}`;
+  const monthStr = partMap.month || '';
+  const monthTitle = monthStr ? monthStr.charAt(0).toUpperCase() + monthStr.slice(1).toLowerCase() : '';
+  return `${partMap.day} ${monthTitle} ${partMap.year} ${partMap.hour}:${partMap.minute}:${partMap.second}`;
 };
