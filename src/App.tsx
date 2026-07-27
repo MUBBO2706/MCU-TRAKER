@@ -917,6 +917,9 @@ export default function App() {
       favChar: key === 'favChar' ? value : favoriteCharacter,
       devMode: key === 'devMode' ? value : developerMode,
       orderingMode: key === 'orderingMode' ? value : orderingMode,
+      lastBackupAt: key === 'lastBackupAt' ? value : user?.preferences?.lastBackupAt,
+      lastRestoreAt: key === 'lastRestoreAt' ? value : user?.preferences?.lastRestoreAt,
+      chartPreference: key === 'chartPreference' ? value : (user?.preferences?.chartPreference || 'bar'),
     };
     if (key === 'favPhase') {
       setFavoritePhase(value);
@@ -2010,6 +2013,8 @@ export default function App() {
                   handleSelectMovieId={setSelectedMovieId}
                   orderingMode={orderingMode}
                   activeTheme={activeTheme}
+                  chartPreference={user?.preferences?.chartPreference || 'bar'}
+                  updatePreference={updatePreference}
                 />
               )}
 

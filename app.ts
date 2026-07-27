@@ -222,7 +222,7 @@ app.get("/api/auth/status", (req, res) => {
       addUpdateLog(userJson, {
         action: "Password",
         previousValue: "N/A",
-        newValue: "Password Created",
+        newValue: "********",
         source: "Account",
         userPerformed: trimmedUsername,
         timestamp: nowMs
@@ -262,16 +262,19 @@ app.get("/api/auth/status", (req, res) => {
         if (p.favPhase) details.push(`Favorite Phase: Phase ${p.favPhase}`);
         if (p.favChar) details.push(`Favorite Character: ${p.favChar}`);
         if (p.devMode) details.push(`Developer Mode: Enabled`);
+        if (p.orderingMode) details.push(`Ordering Mode: ${p.orderingMode}`);
 
-        addUpdateLog(userJson, {
-          action: "Preferences Migrated",
-          previousValue: "N/A",
-          newValue: details.length > 0 ? details.join(" | ") : "User preferences successfully migrated",
-          source: "Account",
-          userPerformed: trimmedUsername,
-          metadata: p,
-          timestamp: nowMs + 3
-        });
+        if (details.length > 0) {
+          addUpdateLog(userJson, {
+            action: "Preferences Migrated",
+            previousValue: "N/A",
+            newValue: details.join(" | "),
+            source: "Account",
+            userPerformed: trimmedUsername,
+            metadata: p,
+            timestamp: nowMs + 3
+          });
+        }
       }
 
       // Add user metadata to the User Index lookup table
@@ -554,14 +557,15 @@ app.get("/api/auth/status", (req, res) => {
               s.durationSeconds = Math.round((s.endedAt - s.startedAt) / 1000);
               userFile.lastUpdated = Date.now();
 
+              const deviceName = s.resolvedDeviceName || s.device || `${s.os} - ${s.browser}`;
               // Add a security audit log
               addUpdateLog(userFile, {
                 action: "Session Terminated",
                 previousValue: "ACTIVE",
-                newValue: `TERMINATED (OS: ${s.os}, Browser: ${s.browser})`,
+                newValue: `${deviceName} Terminated`,
                 source: "Settings",
                 userPerformed: userFile.username,
-                metadata: { terminatedSessionId: sessionIdToTerminate }
+                metadata: { terminatedSessionId: sessionIdToTerminate, deviceName }
               });
 
               // Upload updated JSON file to Telegram
@@ -927,29 +931,40 @@ app.get("/api/auth/status", (req, res) => {
         }
 
         if (preferences !== undefined) {
+          const PREF_NAMES: Record<string, string> = {
+            chartPreference: "Chart Type",
+            orderingMode: "Story Order",
+            timelineMode: "Timeline View",
+            theme: "Theme",
+            favChar: "Favorite Character",
+            favPhase: "Favorite Phase",
+            devMode: "Developer Mode",
+            lastBackupAt: "Last Backup Date",
+            lastRestoreAt: "Last Restore Date",
+            spoilerMode: "Spoiler Mode",
+            hideSpoilers: "Spoiler Mode",
+            language: "Preferred Language",
+            preferredLanguage: "Preferred Language",
+          };
+
           for (const [key, val] of Object.entries(preferences)) {
             const oldVal = oldPreferences[key];
             if (val !== oldVal) {
-              let action = "Preference Updated";
+              const prefName = PREF_NAMES[key] || key.replace(/([A-Z])/g, ' $1').trim().replace(/^./, str => str.toUpperCase());
+              const action = `${prefName} updated`;
               let source = "Preferences";
               if (key === "theme") {
-                action = "Theme changed";
                 source = "Theme";
-              } else if (key === "favChar") {
-                action = "Favorite Character changed";
-                source = "Profile";
-              } else if (key === "favPhase") {
-                action = "Favorite Phase changed";
+              } else if (key === "favChar" || key === "favPhase") {
                 source = "Profile";
               } else if (key === "devMode") {
-                action = "Developer Mode toggled";
                 source = "Settings";
               }
 
               addUpdateLog(userFile, {
                 action,
-                previousValue: oldVal !== undefined ? String(oldVal) : "Default",
-                newValue: val !== undefined ? String(val) : "Default",
+                previousValue: oldVal !== undefined && oldVal !== null && oldVal !== "" ? String(oldVal) : "Default",
+                newValue: val !== undefined && val !== null && val !== "" ? String(val) : "Default",
                 source,
                 userPerformed: userFile.username,
                 metadata: { key }
@@ -1268,8 +1283,8 @@ app.get("/api/auth/status", (req, res) => {
         const userFile = await telegramDb.fetchUserFile(token, chatId, decoded.userId, true);
         addUpdateLog(userFile, {
           action: "Password Changed",
-          previousValue: "Password Changed",
-          newValue: "Password Updated",
+          previousValue: "********",
+          newValue: "********",
           source: "Settings",
           userPerformed: userFile.username,
         });

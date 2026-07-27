@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, Search, ChevronLeft, Download, ChevronDown, FileText, Table } from 'lucide-react';
+import { Eye, Search, ChevronLeft, Download, ChevronDown, FileText, Table, MoreVertical, XCircle, Trash2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { CustomDropdown } from '../CustomDropdown';
@@ -46,7 +46,7 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
   const [isDurationHHMMSS, setIsDurationHHMMSS] = useState(false);
-  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [showMoreDropdown, setShowMoreDropdown] = useState(false);
 
   // Row-level action states
   const [confirmingTerminateId, setConfirmingTerminateId] = useState<string | null>(null);
@@ -553,78 +553,110 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
 
   return (
     <div className="flex flex-col animate-fadeIn text-left gap-2 font-sans w-full py-1 px-1" id="session-registry-codex-expanded">
-      <div className="flex flex-col gap-1.5 md:gap-3 w-full text-left md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-1.5 md:gap-3 w-full text-left md:flex-row md:items-center md:justify-between z-40">
         <div className="flex flex-col gap-1 text-left w-full md:w-auto">
-          {/* Row 1 on mobile: Header (left) and Export Button (right) */}
           <div className="flex items-center justify-between w-full md:w-auto md:justify-start md:gap-2">
             <h2 className="font-display font-bold text-xl sm:text-2xl tracking-tight text-white flex items-center gap-2">
               <Eye className={`${themeStyles.marvelIcon} w-5 h-5 sm:w-6 sm:h-6`} />
               Sessions
             </h2>
 
-            {/* Theme-Aware Responsive Export Actions (Mobile Only) */}
-            <div className="relative md:hidden">
+            {/* Consolidates actions into 'More' dropdown on mobile & desktop */}
+            <div className="relative">
               <button
                 type="button"
-                onClick={() => setShowExportDropdown(!showExportDropdown)}
-                className={exportStyles.buttonClass}
+                onClick={() => setShowMoreDropdown(!showMoreDropdown)}
+                className={`bg-transparent border-0 outline-none shadow-none focus:outline-none focus:ring-0 ${
+                  activeTheme.startsWith('light-') ? 'text-slate-700 hover:text-red-600' : 'text-neutral-300 hover:text-marvel'
+                } px-2 py-1 text-xs font-mono font-medium flex items-center gap-1.5 cursor-pointer transition-colors`}
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export</span>
-                <ChevronDown className={`w-3 h-3 ml-0.5 transition-transform duration-200 ${showExportDropdown ? 'rotate-180' : ''}`} />
+                <span>More</span>
+                <MoreVertical className="w-3.5 h-3.5 shrink-0" />
               </button>
-              {showExportDropdown && (
+
+              {showMoreDropdown && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowExportDropdown(false)} />
-                  <div className={exportStyles.dropdownClass}>
-                    <button
-                      onClick={() => {
-                        handleExportPDF();
-                        setShowExportDropdown(false);
-                      }}
-                      className={exportStyles.dropdownItemClass}
-                    >
-                      <FileText className="w-3.5 h-3.5 shrink-0" />
-                      <span>Export as PDF</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleExportCSV();
-                        setShowExportDropdown(false);
-                      }}
-                      className={exportStyles.dropdownItemClass}
-                    >
-                      <Table className="w-3.5 h-3.5 shrink-0" />
-                      <span>Export as CSV / Excel</span>
-                    </button>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowMoreDropdown(false)} />
+                  <div className={`absolute right-0 mt-2 w-52 rounded-xl ${
+                    activeTheme.startsWith('light-') ? 'bg-white border-slate-300' : 'bg-neutral-950 border-neutral-800'
+                  } border z-50 py-1 shadow-xl text-left font-mono text-xs overflow-visible`}>
+                    {/* Tail / Callout triangle pointing up directly at the vertical three-dots icon */}
+                    <div className={`absolute -top-1.5 right-[9px] w-3 h-3 rotate-45 border-t border-l ${
+                      activeTheme.startsWith('light-') ? 'bg-white border-slate-300' : 'bg-neutral-950 border-neutral-800'
+                    }`} />
+
+                    <div className="relative z-10 py-1">
+                      {/* Action Group 1: Exports */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleExportPDF();
+                          setShowMoreDropdown(false);
+                        }}
+                        className={exportStyles.dropdownItemClass}
+                      >
+                        <FileText className="w-3.5 h-3.5 shrink-0 text-red-500" />
+                        <span>Export as PDF</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleExportCSV();
+                          setShowMoreDropdown(false);
+                        }}
+                        className={exportStyles.dropdownItemClass}
+                      >
+                        <Table className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
+                        <span>Export as CSV / Excel</span>
+                      </button>
+
+                      {/* Separator between action groups */}
+                      <div className={`my-1 border-t ${
+                        activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-850'
+                      }`} />
+
+                      {/* Action Group 2: Session Management */}
+                      {onTerminateOtherSessions && (
+                        <button
+                          type="button"
+                          disabled={isRowActionRunning !== null || isBulkRunning || sessions.filter((s: any) => s.status === 'Active' && s.sessionId !== currentSessionId).length === 0}
+                          onClick={() => {
+                            setShowMoreDropdown(false);
+                            setModalType('terminate_others');
+                            setModalOpen(true);
+                          }}
+                          className={`${exportStyles.dropdownItemClass} text-rose-500 hover:text-rose-400 disabled:opacity-40 disabled:cursor-not-allowed`}
+                        >
+                          <XCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                          <span>Terminate All Sessions</span>
+                        </button>
+                      )}
+
+                      {onDeleteInactiveSessions && (
+                        <button
+                          type="button"
+                          disabled={isRowActionRunning !== null || isBulkRunning || sessions.filter((s: any) => s.status !== 'Active' && s.sessionId !== currentSessionId).length === 0}
+                          onClick={() => {
+                            setShowMoreDropdown(false);
+                            setModalType('delete_all_inactive');
+                            setModalOpen(true);
+                          }}
+                          className={`${exportStyles.dropdownItemClass} text-amber-500 hover:text-amber-400 disabled:opacity-40 disabled:cursor-not-allowed`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                          <span>Delete All Sessions</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </>
               )}
             </div>
           </div>
 
-          {/* Row 2 on mobile: Page Description spanning full width. On desktop, it sits below the header title. */}
           <p className="font-sans text-xs text-neutral-400 w-full">
             Audit all security sessions, client devices, and authentication states for Agent @{user?.username || 'sandbox_mode'}.
           </p>
-        </div>
-
-        {/* Desktop Controls (hidden on small screens, shown side-by-side on md+) */}
-        <div className="hidden md:flex items-center gap-2">
-          <button
-            onClick={handleExportPDF}
-            className={exportStyles.buttonClass}
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export PDF</span>
-          </button>
-          <button
-            onClick={handleExportCSV}
-            className={exportStyles.buttonClass}
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export CSV / Excel</span>
-          </button>
         </div>
       </div>
 
@@ -694,7 +726,7 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
         </div>
       </div>
 
-      {/* Custom Range: Additional Custom Selectors (rendered ABOVE bulk actions as requested) */}
+      {/* Custom Range: Additional Custom Selectors */}
       {timeRange === 'custom' && (
         <div className="flex flex-row items-center gap-3 mt-1.5 animate-fadeIn z-10 w-full md:w-auto">
           <div className="w-1/2 md:w-44">
@@ -720,51 +752,6 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
               activeTheme={activeTheme}
             />
           </div>
-        </div>
-      )}
-
-      {/* Bulk Actions Row - below both Filters and Custom Range picker */}
-      {(onTerminateOtherSessions || onDeleteInactiveSessions) && (
-        <div className={`grid grid-cols-2 sm:flex sm:justify-end gap-2 sm:gap-3 mt-2.5 w-full border-t pt-2.5 ${
-          activeTheme.startsWith('light-') ? 'border-slate-300/60' : 'border-neutral-900/40'
-        }`}>
-          {onTerminateOtherSessions && (
-            <button
-              type="button"
-              disabled={isRowActionRunning !== null || isBulkRunning || sessions.filter((s: any) => s.status === 'Active' && s.sessionId !== currentSessionId).length === 0}
-              onClick={() => {
-                setModalType('terminate_others');
-                setModalOpen(true);
-              }}
-              className={`text-[9px] xs:text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 xs:px-3.5 py-2.5 rounded-xl transition-all cursor-pointer font-mono flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap border w-full sm:w-auto sm:px-5 text-center h-10 ${
-                activeTheme.startsWith('light-')
-                  ? 'bg-rose-100/90 hover:bg-rose-200/90 border-rose-300/80 text-rose-800'
-                  : 'bg-red-950/40 hover:bg-red-900/60 border-red-900/60 hover:border-red-500 text-red-200'
-              }`}
-              title="Terminate all other active sessions except the current one"
-            >
-              Terminate All Inactive
-            </button>
-          )}
-
-          {onDeleteInactiveSessions && (
-            <button
-              type="button"
-              disabled={isRowActionRunning !== null || isBulkRunning || sessions.filter((s: any) => s.status !== 'Active' && s.sessionId !== currentSessionId).length === 0}
-              onClick={() => {
-                setModalType('delete_all_inactive');
-                setModalOpen(true);
-              }}
-              className={`text-[9px] xs:text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 xs:px-3.5 py-2.5 rounded-xl transition-all cursor-pointer font-mono flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap border w-full sm:w-auto sm:px-5 text-center h-10 ${
-                activeTheme.startsWith('light-')
-                  ? 'bg-slate-200/80 hover:bg-slate-300/80 border-slate-300 text-slate-800'
-                  : 'bg-neutral-900 hover:bg-neutral-850 border-neutral-800 hover:border-neutral-700 text-neutral-200'
-              }`}
-              title="Permanently delete all terminated/expired/logged-out sessions"
-            >
-              Delete All Sessions
-            </button>
-          )}
         </div>
       )}
 

@@ -26,6 +26,8 @@ interface DashboardTabProps {
   handleSelectMovieId: (id: string) => void;
   orderingMode: 'theatrical' | 'chronological';
   activeTheme?: ThemeType;
+  chartPreference?: 'bar' | 'line';
+  updatePreference?: (key: string, value: any) => void;
 }
 
 export function DashboardTab({
@@ -37,11 +39,26 @@ export function DashboardTab({
   handleSelectMovieId,
   orderingMode,
   activeTheme,
+  chartPreference = 'bar',
+  updatePreference,
 }: DashboardTabProps) {
   const [secondsTick, setSecondsTick] = React.useState<number>(0);
-  const [chartType, setChartType] = React.useState<'bar' | 'line'>('bar');
+  const [chartType, setChartType] = React.useState<'bar' | 'line'>(chartPreference);
   const [activeBarIndex, setActiveBarIndex] = React.useState<number | null>(null);
   const [activeLineIndex, setActiveLineIndex] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (chartPreference && chartPreference !== chartType) {
+      setChartType(chartPreference);
+    }
+  }, [chartPreference]);
+
+  const toggleChartType = (type: 'bar' | 'line') => {
+    setChartType(type);
+    if (updatePreference) {
+      updatePreference('chartPreference', type);
+    }
+  };
 
   const isLightMode = activeTheme?.startsWith('light-') || false;
 
@@ -371,7 +388,7 @@ export function DashboardTab({
               isLightMode ? 'bg-slate-100 border-slate-200' : 'bg-neutral-900 border-neutral-800'
             }`}>
               <button
-                onClick={() => setChartType('bar')}
+                onClick={() => toggleChartType('bar')}
                 className={`flex items-center gap-1 px-2 py-1 rounded-md transition-all cursor-pointer ${
                   chartType === 'bar'
                     ? (isLightMode ? 'bg-white text-slate-900 shadow-xs font-bold' : 'bg-neutral-800 text-white font-bold')
@@ -383,7 +400,7 @@ export function DashboardTab({
                 <span className="hidden sm:inline">Bar</span>
               </button>
               <button
-                onClick={() => setChartType('line')}
+                onClick={() => toggleChartType('line')}
                 className={`flex items-center gap-1 px-2 py-1 rounded-md transition-all cursor-pointer ${
                   chartType === 'line'
                     ? (isLightMode ? 'bg-white text-slate-900 shadow-xs font-bold' : 'bg-neutral-800 text-white font-bold')

@@ -47,8 +47,19 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 }) => {
   const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
-  const [lastBackup, setLastBackup] = useState<string | null>(() => localStorage.getItem('mcu_last_backup_time'));
-  const [lastRestore, setLastRestore] = useState<string | null>(() => localStorage.getItem('mcu_last_restore_time'));
+  const [lastBackup, setLastBackup] = useState<string | null>(() => user?.preferences?.lastBackupAt || localStorage.getItem('mcu_last_backup_time'));
+  const [lastRestore, setLastRestore] = useState<string | null>(() => user?.preferences?.lastRestoreAt || localStorage.getItem('mcu_last_restore_time'));
+
+  React.useEffect(() => {
+    if (user?.preferences?.lastBackupAt) {
+      setLastBackup(user.preferences.lastBackupAt);
+      localStorage.setItem('mcu_last_backup_time', user.preferences.lastBackupAt);
+    }
+    if (user?.preferences?.lastRestoreAt) {
+      setLastRestore(user.preferences.lastRestoreAt);
+      localStorage.setItem('mcu_last_restore_time', user.preferences.lastRestoreAt);
+    }
+  }, [user?.preferences?.lastBackupAt, user?.preferences?.lastRestoreAt]);
 
   const hasLocalData = Object.keys(watchData || {}).length > 0;
 
@@ -56,6 +67,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     const now = new Date().toISOString();
     localStorage.setItem('mcu_last_backup_time', now);
     setLastBackup(now);
+    updatePreference('lastBackupAt', now);
     handleExportData();
   };
 
@@ -63,6 +75,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     const now = new Date().toISOString();
     localStorage.setItem('mcu_last_restore_time', now);
     setLastRestore(now);
+    updatePreference('lastRestoreAt', now);
     await handleImportData(e);
   };
 
