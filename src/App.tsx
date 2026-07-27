@@ -49,8 +49,6 @@ import { ConfirmationModal } from './components/Common/ConfirmationModal';
 import { formatToIndianDateTime } from './utils/date';
 import { triggerConfettiParticles } from './utils/confetti';
 import { getDeviceModel } from './utils/device';
-import { triggerHaptic } from './utils/haptics';
-import { updateAppBadge } from './utils/badge';
 import { useCountdown } from './hooks/useCountdown';
 import { useBodyScrollLock } from './hooks/useBodyScrollLock';
 
@@ -117,7 +115,6 @@ export default function App() {
   // Exact set-state compatible wrapper functions to trigger instantaneous navigation
   const setActiveTab = (tabOrFunc: any) => {
     const tab = typeof tabOrFunc === 'function' ? tabOrFunc(activeTab) : tabOrFunc;
-    triggerHaptic('selection');
     navigate(`/${tab}`);
   };
 
@@ -573,9 +570,6 @@ export default function App() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const showFeedback = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-    if (type === 'success') triggerHaptic('success');
-    else if (type === 'error') triggerHaptic('error');
-    else triggerHaptic('light');
     setToast({ message, type });
   };
 
@@ -589,15 +583,6 @@ export default function App() {
   // Watch data store
   const [watchData, setWatchData] = useState<Record<string, UserWatchData>>({});
   const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
-
-  // Sync App Icon Badge API whenever watchData changes (Remaining unwatched count)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const totalTitles = MCU_TITLES.length;
-    const watchedCount = MCU_TITLES.filter(title => watchData[title.id]?.status === 'watched').length;
-    const remainingUnwatched = Math.max(0, totalTitles - watchedCount);
-    updateAppBadge(remainingUnwatched);
-  }, [watchData]);
 
   // Client-side caching states
   const [cacheProgress, setCacheProgress] = useState<CacheProgress>({
