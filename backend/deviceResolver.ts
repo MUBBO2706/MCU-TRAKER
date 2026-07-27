@@ -1,5 +1,6 @@
 import { getTelegramConfig, uploadTelegramFile, getTelegramFilePath, downloadTelegramFile, updateTelegramFile, getMasterIndexMetadata, updateMasterIndexMetadata } from './telegramDb.js';
 
+const CENTRAL_MAPPER_URL = 'https://ceaznet.vercel.app/api/device-mapper';
 const DEVICE_MAPPINGS_FILENAME = 'device_mappings.json';
 const GITHUB_DEVICES_URL = 'https://raw.githubusercontent.com/androidtrackers/certified-android-devices/master/by_model.json';
 
@@ -23,6 +24,47 @@ export async function resolveDeviceName(model: string): Promise<string | null> {
     return null;
   }
 
+  // 1. Try Centralized Device Resolver API
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 second safety timeout
+
+    const response = await fetch(CENTRAL_MAPPER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: cleanModel,
+        skipCache: false,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data && typeof data.name === 'string' && data.name.trim().length > 0) {
+        const resolved = data.name.trim();
+        if (
+          resolved !== 'Unknown Device' &&
+          resolved !== 'Unknown' &&
+          resolved !== 'Android Device'
+        ) {
+          return resolved;
+        }
+      }
+    }
+  } catch (err: any) {
+    console.warn(`Central Device Mapper API lookup failed for model "${cleanModel}", utilizing local fallback:`, err?.message || err);
+  }
+
+  // 2. Fallback to Local Resolver (Telegram Cache + Certified Android Devices Database)
+  return resolveDeviceNameLocal(cleanModel);
+}
+
+async function resolveDeviceNameLocal(cleanModel: string): Promise<string | null> {
   // 1. Initialize from Telegram if not done yet
   if (!localMappingsCache) {
     try {
