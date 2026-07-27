@@ -16,7 +16,7 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon.png",
+      "src": "/icons/icon-arc-reactor.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -24,46 +24,69 @@
   ],
   "shortcuts": [
     {
-      "name": "Dashboard & Alerts",
+      "name": "Dashboard",
       "short_name": "Dashboard",
-      "description": "View MCU Multiverse Alerts and Progress Overview",
+      "description": "MCU Multiverse Alerts and Progress",
       "url": "/dashboard",
-      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/shortcuts/shortcut-dashboard.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
-      "name": "MCU Movies Tracker",
+      "name": "Movies",
       "short_name": "Movies",
-      "description": "Browse and track all Marvel Cinematic Universe Movies",
+      "description": "Browse and track MCU Movies",
       "url": "/movies",
-      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/shortcuts/shortcut-movies.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
-      "name": "MCU TV Series Tracker",
+      "name": "Series",
       "short_name": "Series",
-      "description": "Track Marvel Disney+ & TV Series episodes",
+      "description": "Track Marvel TV Series",
       "url": "/series",
-      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/shortcuts/shortcut-series.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
-      "name": "Chronological Timeline",
+      "name": "Timeline",
       "short_name": "Timeline",
-      "description": "Explore MCU events in exact story order",
+      "description": "MCU Story Order Timeline",
       "url": "/timeline",
-      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/shortcuts/shortcut-timeline.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
-      "name": "Viewing Analytics",
+      "name": "Analytics",
       "short_name": "Analytics",
-      "description": "Detailed watch time statistics and phase breakdowns",
+      "description": "Detailed watch time statistics",
       "url": "/analytics",
-      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Settings & Cache",
-      "short_name": "Settings",
-      "description": "Configure viewing order, theme, and offline cache",
-      "url": "/settings",
-      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/shortcuts/shortcut-analytics.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

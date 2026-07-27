@@ -7,6 +7,11 @@
 export async function updateAppBadge(count: number): Promise<void> {
   if (typeof window === 'undefined') return;
 
+  const isEnabled = localStorage.getItem('mcu_badge_enabled') !== 'false';
+  if (!isEnabled) {
+    return clearAppBadge();
+  }
+
   try {
     const nav = navigator as any;
     if (count > 0) {
@@ -16,11 +21,7 @@ export async function updateAppBadge(count: number): Promise<void> {
         await nav.experimentalSetAppBadge(count);
       }
     } else {
-      if (typeof nav.clearAppBadge === 'function') {
-        await nav.clearAppBadge();
-      } else if (typeof nav.experimentalClearAppBadge === 'function') {
-        await nav.experimentalClearAppBadge();
-      }
+      await clearAppBadge();
     }
   } catch {
     // Gracefully handle permission rejections or lack of OS badge support
