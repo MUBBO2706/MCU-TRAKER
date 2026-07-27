@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Download, Upload, RotateCcw, Settings, Smartphone, Vibrate, Bell, SunMedium, CheckCircle2, ShieldCheck, Sparkles, HelpCircle, Check, Zap } from 'lucide-react';
+import { Download, Upload, Database, RotateCcw, Settings } from 'lucide-react';
 import { CacheProgress } from '../Profile/ProfileTab';
 import { ConfirmationModal } from '../Common/ConfirmationModal';
 import { ThemeType, ThemeMode } from '../../types';
-import { usePwa, APP_ICON_OPTIONS } from '../../hooks/usePwa';
 
 interface SettingsTabProps {
   activeTheme: ThemeType;
@@ -25,31 +24,6 @@ interface SettingsTabProps {
   watchData?: Record<string, any>;
   user?: any;
 }
-
-// Helper component for Icon image loading with SVG fallback
-const IconImage: React.FC<{ src: string; alt: string; themeColor: string }> = ({ src, alt, themeColor }) => {
-  const [hasError, setHasError] = useState(false);
-
-  if (hasError) {
-    return (
-      <div
-        className="w-full h-full rounded-xl flex items-center justify-center p-2 text-white font-bold"
-        style={{ backgroundColor: themeColor }}
-      >
-        <Sparkles className="w-5 h-5 animate-pulse" />
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={src}
-      alt={alt}
-      onError={() => setHasError(false)} // try again or fallback
-      className="w-full h-full object-cover rounded-xl"
-    />
-  );
-};
 
 export const SettingsTab: React.FC<SettingsTabProps> = ({
   activeTheme,
@@ -75,24 +49,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [isPurging, setIsPurging] = useState(false);
   const [lastBackup, setLastBackup] = useState<string | null>(() => user?.preferences?.lastBackupAt || localStorage.getItem('mcu_last_backup_time'));
   const [lastRestore, setLastRestore] = useState<string | null>(() => user?.preferences?.lastRestoreAt || localStorage.getItem('mcu_last_restore_time'));
-  const [showInstallGuide, setShowInstallGuide] = useState(false);
-
-  const {
-    isStandalone,
-    canInstall,
-    installPwa,
-    hapticsEnabled,
-    toggleHaptics,
-    badgeEnabled,
-    toggleBadge,
-    wakeLockEnabled,
-    toggleWakeLock,
-    selectedIcon,
-    selectAppIcon,
-    hasWakeLockSupport,
-    hasVibrationSupport,
-    hasBadgeSupport,
-  } = usePwa();
 
   React.useEffect(() => {
     if (user?.preferences?.lastBackupAt) {
@@ -133,281 +89,40 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     }
   };
 
-  const handleInstallClick = async () => {
-    if (canInstall) {
-      const installed = await installPwa();
-      if (installed) {
-        showFeedback('Nexus MCU Companion installed successfully!', 'success');
-      }
-    } else {
-      setShowInstallGuide(true);
-    }
-  };
+  const backupSizeInBytes = new Blob([JSON.stringify(watchData || {})]).size;
+  const formattedSize = backupSizeInBytes > 1024 
+    ? `${(backupSizeInBytes / 1024).toFixed(1)} KB` 
+    : `${backupSizeInBytes} B`;
+
+  const localStorageSize = Object.keys(localStorage).reduce((sum, key) => sum + (localStorage.getItem(key) || '').length, 0);
+  const formattedLocalSize = localStorageSize > 1024 
+    ? `${(localStorageSize / 1024).toFixed(1)} KB` 
+    : `${localStorageSize} B`;
 
   return (
-    <div className="flex flex-col animate-fadeIn text-left gap-8 font-sans w-full py-1 px-1" id="settings-station-view">
-      {/* Settings Header */}
-      <div className={`flex flex-col gap-1.5 border-b pb-4 ${activeTheme.startsWith('light-') ? 'border-slate-200/80' : 'border-neutral-900'}`}>
+    <div className="flex flex-col animate-fadeIn text-left gap-4 font-sans w-full py-1 px-1" id="settings-station-view">
+      <div className={`flex flex-col gap-1.5 border-b pb-4 ${activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-900'}`}>
         <h2 className={`font-display font-bold text-2xl tracking-tight flex items-center gap-2 ${activeTheme.startsWith('light-') ? 'text-slate-900' : 'text-white'}`}>
           <Settings className="text-marvel w-6 h-6 animate-spin-slow" />
           Settings
         </h2>
         <p className={`font-sans text-xs ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
-          Configure agent preferences, native PWA capabilities, app icons, and offline storage.
+          Configure agent visual preferences, synchronize offline databases, and manage local media caches.
         </p>
       </div>
 
-      {/* SMART PWA DETECTION & INSTALLATION SECTION - CONTAINERLESS */}
-      {!isStandalone ? (
-        <div className={`pl-4 border-l-4 border-marvel py-1 transition-all ${
-          activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-200'
-        }`}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-marvel/10 text-marvel shrink-0 mt-0.5 sm:mt-0">
-                <Smartphone className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <h3 className={`font-display font-bold text-sm sm:text-base ${activeTheme.startsWith('light-') ? 'text-slate-900' : 'text-white'}`}>
-                    Install MCU Companion App
-                  </h3>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-marvel/20 text-marvel font-bold uppercase tracking-wider">
-                    PWA Ready
-                  </span>
-                </div>
-                <p className={`text-xs ${activeTheme.startsWith('light-') ? 'text-slate-600' : 'text-neutral-400'}`}>
-                  Install on your device for full-screen standalone view, instant offline load, haptics, and custom app icons.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-              <button
-                type="button"
-                onClick={handleInstallClick}
-                className="w-full sm:w-auto px-5 py-2 rounded-xl bg-marvel hover:bg-marvel-dark text-white font-semibold text-xs transition-all shadow-md shadow-marvel/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-              >
-                <Zap className="w-4 h-4 fill-white" />
-                {canInstall ? 'Install Application' : 'Installation Guide'}
-              </button>
-            </div>
-          </div>
-
-          {/* Expanded Installation Guide if prompt is unavailable */}
-          {showInstallGuide && !canInstall && (
-            <div className={`mt-4 pt-3 border-t text-xs flex flex-col gap-3 ${
-              activeTheme.startsWith('light-') ? 'border-slate-200 text-slate-700' : 'border-neutral-800 text-neutral-300'
-            }`}>
-              <div className="flex items-center justify-between">
-                <span className="font-bold flex items-center gap-1.5 text-marvel">
-                  <HelpCircle className="w-4 h-4" /> How to Install manually on your browser:
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowInstallGuide(false)}
-                  className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-white underline cursor-pointer"
-                >
-                  Close guide
-                </button>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-                <div className="flex flex-col gap-1">
-                  <span className="font-bold text-marvel text-xs">Android Chrome</span>
-                  <ol className="list-decimal list-inside space-y-1 text-[11px] opacity-80">
-                    <li>Tap the 3 dots menu (⋮) top right</li>
-                    <li>Select <strong>Add to Home screen</strong> or <strong>Install app</strong></li>
-                    <li>Tap <strong>Install</strong> to confirm</li>
-                  </ol>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="font-bold text-marvel text-xs">iOS Safari</span>
-                  <ol className="list-decimal list-inside space-y-1 text-[11px] opacity-80">
-                    <li>Tap the Share button (⎘) at bottom</li>
-                    <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
-                    <li>Tap <strong>Add</strong> in top right</li>
-                  </ol>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="font-bold text-marvel text-xs">Desktop Chrome / Edge</span>
-                  <ol className="list-decimal list-inside space-y-1 text-[11px] opacity-80">
-                    <li>Click the Install icon in address bar</li>
-                    <li>Or click menu ⋮ → <strong>Save and Share</strong> → <strong>Install</strong></li>
-                  </ol>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* STANDALONE PWA NATIVE CUSTOMIZATION PANEL - CONTAINERLESS */
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-neutral-900">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              <h3 className={`font-display font-bold text-sm ${activeTheme.startsWith('light-') ? 'text-slate-900' : 'text-white'}`}>
-                Native PWA Controls
-              </h3>
-            </div>
-            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Standalone Mode
-            </span>
-          </div>
-
-          {/* Native Toggles List - Containerless */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {/* Haptic Vibration Toggle */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <Vibrate className="w-4 h-4 text-marvel shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <span className={`text-xs font-bold truncate ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
-                    Haptic Touch
-                  </span>
-                  <span className={`text-[10px] truncate ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
-                    {hasVibrationSupport ? 'Touch feedback vibrations' : 'Not supported'}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => toggleHaptics(!hapticsEnabled)}
-                disabled={!hasVibrationSupport}
-                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 ${
-                  hapticsEnabled ? 'bg-marvel' : activeTheme.startsWith('light-') ? 'bg-slate-300' : 'bg-neutral-800'
-                }`}
-              >
-                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
-                  hapticsEnabled ? 'translate-x-5' : 'translate-x-0'
-                }`} />
-              </button>
-            </div>
-
-            {/* App Icon Badge Toggle */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <Bell className="w-4 h-4 text-amber-500 shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <span className={`text-xs font-bold truncate ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
-                    App Icon Badge
-                  </span>
-                  <span className={`text-[10px] truncate ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
-                    {hasBadgeSupport ? 'Show unwatched counter' : 'Launcher supported'}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => toggleBadge(!badgeEnabled)}
-                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  badgeEnabled ? 'bg-marvel' : activeTheme.startsWith('light-') ? 'bg-slate-300' : 'bg-neutral-800'
-                }`}
-              >
-                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
-                  badgeEnabled ? 'translate-x-5' : 'translate-x-0'
-                }`} />
-              </button>
-            </div>
-
-            {/* Screen Wake Lock Toggle */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <SunMedium className="w-4 h-4 text-sky-500 shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <span className={`text-xs font-bold truncate ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
-                    Screen Wake Lock
-                  </span>
-                  <span className={`text-[10px] truncate ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
-                    {hasWakeLockSupport ? 'Keep display awake' : 'Unsupported'}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => toggleWakeLock(!wakeLockEnabled)}
-                disabled={!hasWakeLockSupport}
-                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 ${
-                  wakeLockEnabled ? 'bg-marvel' : activeTheme.startsWith('light-') ? 'bg-slate-300' : 'bg-neutral-800'
-                }`}
-              >
-                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
-                  wakeLockEnabled ? 'translate-x-5' : 'translate-x-0'
-                }`} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* HOME SCREEN APP ICON SELECTION SECTION - CONTAINERLESS */}
-      <div className="flex flex-col gap-3 pt-2 border-t border-slate-200/60 dark:border-neutral-900">
-        <div className="flex flex-col gap-1">
-          <span className={`text-xs uppercase font-bold tracking-wider font-display flex items-center gap-1.5 ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-300'}`}>
-            <Sparkles className="w-4 h-4 text-marvel" /> Home Screen App Icon
-          </span>
-          <p className={`text-[11px] ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
-            Select an MCU aesthetic icon theme. Applies immediately to web app manifests, browser tabs, and launcher shortcuts.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1">
-          {APP_ICON_OPTIONS.map((icon) => {
-            const isSelected = selectedIcon === icon.id;
-            return (
-              <button
-                key={icon.id}
-                type="button"
-                onClick={() => {
-                  selectAppIcon(icon.id);
-                  showFeedback(`App Icon changed to ${icon.name}`, 'success');
-                }}
-                className={`p-2.5 rounded-xl flex flex-col items-center text-center gap-2 transition-all relative cursor-pointer group ${
-                  isSelected
-                    ? 'ring-2 ring-marvel bg-marvel/5 scale-[1.02]'
-                    : activeTheme.startsWith('light-')
-                    ? 'hover:bg-slate-100/70'
-                    : 'hover:bg-neutral-900/60'
-                }`}
-              >
-                {isSelected && (
-                  <span className="absolute top-1.5 right-1.5 p-0.5 rounded-full bg-marvel text-white">
-                    <Check className="w-2.5 h-2.5" />
-                  </span>
-                )}
-                <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm p-0.5 bg-black/30 border border-white/10 group-hover:scale-105 transition-transform flex items-center justify-center">
-                  <IconImage
-                    src={icon.previewUrl}
-                    alt={icon.name}
-                    themeColor={icon.themeColor}
-                  />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className={`text-xs font-bold leading-snug ${isSelected ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
-                    {icon.name}
-                  </span>
-                  <span className={`text-[9px] ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
-                    {icon.subtitle}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Viewing Order Preference - CONTAINERLESS */}
-      <div className="flex flex-col gap-3 pt-3 border-t border-slate-200/60 dark:border-neutral-900">
-        <span className={`text-xs uppercase font-bold tracking-wider font-display ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-300'}`}>
+      {/* Viewing Order Preference */}
+      <div className="flex flex-col gap-4">
+        <span className={`text-xs uppercase font-bold tracking-wider font-display ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-400'}`}>
           Viewing Order Preference
         </span>
-        <p className={`text-[11px] leading-relaxed -mt-1 text-left ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
-          Choose your default MCU timeline perspective: Theatrical Release Order or Chronological Story Order.
+        <p className={`text-[10px] leading-relaxed -mt-2 text-left ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
+          Select your default timeline perspective. Theatrical Release Order provides the classic cinema release flow, while Chronological Order arranges titles sequentially as events happened in the MCU story.
         </p>
-        <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-4 sm:w-max pt-1" id="settings-order-grid">
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-4 sm:w-max" id="settings-order-grid">
           {[
-            { id: 'theatrical', name: 'Theatrical Order', desc: 'Default Cinema Release' },
-            { id: 'chronological', name: 'Chronological Timeline', desc: 'In-Universe Story Order' },
+            { id: 'theatrical', name: 'Theatrical Order', desc: 'Default (Classic Release)' },
+            { id: 'chronological', name: 'Chronological Timeline', desc: 'Story Order' },
           ].map((o) => (
             <button
               key={o.id}
@@ -415,12 +130,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               onClick={() => {
                 updatePreference('orderingMode', o.id);
               }}
-              className={`p-2.5 rounded-xl border text-left flex flex-col justify-center gap-0.5 transition-all focus:outline-none min-w-0 w-full sm:w-56 cursor-pointer ${
+              className={`p-3 rounded-xl border text-left flex flex-col justify-center gap-0.5 transition-all focus:outline-none min-w-0 w-full sm:w-56 cursor-pointer h-[58px] ${
                 orderingMode === o.id
-                  ? 'border-marvel bg-marvel/5 font-bold'
+                  ? 'border-marvel bg-marvel/5 shadow-md shadow-marvel/5 font-bold'
                   : activeTheme.startsWith('light-')
-                  ? 'border-slate-200/80 bg-slate-50/50 hover:bg-slate-100'
-                  : 'border-neutral-800/80 bg-neutral-900/30 hover:bg-neutral-900/80'
+                  ? 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
+                  : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
               }`}
             >
               <span className={`text-[11px] font-semibold leading-tight ${orderingMode === o.id ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
@@ -434,43 +149,52 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
       </div>
 
-      {/* Grid for lower settings sections - CONTAINERLESS & FLATTENED */}
-      <div className={`grid grid-cols-1 md:grid-cols-3 gap-8 pt-4 border-t ${activeTheme.startsWith('light-') ? 'border-slate-200/60' : 'border-neutral-900'}`} id="settings-grid-sections">
+      {/* Grid for lower settings sections on Desktop using balanced column layout */}
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-5 border-t items-stretch ${activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-900/60'}`} id="settings-grid-sections">
         {/* Item 1: Offline Cache Manager */}
-        <div className="flex flex-col justify-between gap-4">
-          <div className="flex flex-col gap-2.5">
-            <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-200/40 dark:border-neutral-900">
-              <span className={`text-xs uppercase font-bold tracking-wider font-display whitespace-nowrap ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-300'}`}>
+        <div className="flex flex-col justify-between gap-4 h-full">
+          <div className="flex flex-col gap-3">
+            <div className={`flex items-center justify-between gap-2 border-b pb-2 ${activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-900/60'}`}>
+              <span className={`text-xs uppercase font-bold tracking-wider font-display whitespace-nowrap ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-400'}`}>
                 Offline Cache Manager
               </span>
-              <span className={`font-mono text-[9px] font-bold rounded-full px-2 py-0.5 uppercase tracking-wider whitespace-nowrap ${
+              <span className={`font-mono text-[9px] font-bold border rounded-full px-2.5 py-0.5 uppercase tracking-wider whitespace-nowrap ${
                 cacheProgress.isSyncing
-                  ? 'bg-amber-500/10 text-amber-500 animate-pulse'
+                  ? 'bg-amber-500/10 border-amber-500/20 text-amber-500 animate-pulse'
                   : cacheProgress.isComplete
-                  ? 'bg-emerald-500/10 text-emerald-500'
+                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
                   : activeTheme.startsWith('light-')
-                  ? 'bg-slate-100 text-slate-500'
-                  : 'bg-neutral-900 text-neutral-400'
+                  ? 'bg-slate-100 border-slate-200 text-slate-500'
+                  : 'bg-neutral-900 border-neutral-800 text-neutral-400'
               }`}>
                 {cacheProgress.isSyncing ? 'Syncing...' : cacheProgress.isComplete ? 'Offline Active' : 'Idle'}
               </span>
             </div>
 
             <p className={`text-[10px] leading-relaxed text-left ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
-              Caches Marvel posters, backdrops, and character portraits locally using Cache Storage &amp; IndexedDB.
+              Caches all Marvel posters, backdrops, and character portraits locally on the client using high-performance Cache Storage &amp; IndexedDB to reduce network hops.
             </p>
 
+            {/* Horizontal Separator */}
+            <div className={`border-t ${
+              activeTheme.startsWith('light-') ? 'border-slate-200/80' : 'border-neutral-900/40'
+            }`} />
+
             {/* Progress bar */}
-            <div className="flex flex-col gap-1 pt-1">
+            <div className="flex flex-col gap-1.5">
               <div className={`flex justify-between items-center text-[10px] font-mono ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
-                <span>Cache Sync</span>
-                <span>{cacheProgress.completed}/{cacheProgress.total} Files</span>
+                <span>Cache Sync Progress</span>
+                <span>
+                  {cacheProgress.completed}/{cacheProgress.total} Files
+                </span>
               </div>
-              <div className={`h-1.5 w-full rounded-full overflow-hidden ${
-                activeTheme.startsWith('light-') ? 'bg-slate-200/70' : 'bg-neutral-800'
+              <div className={`h-2 w-full rounded-full overflow-hidden border ${
+                activeTheme.startsWith('light-') ? 'bg-slate-100 border-slate-200/60' : 'bg-neutral-950 border-neutral-900'
               }`}>
                 <div
-                  className={`h-full transition-all duration-500 ${cacheProgress.isSyncing ? 'bg-amber-500' : 'bg-marvel'}`}
+                  className={`h-full transition-all duration-500 ${
+                    cacheProgress.isSyncing ? 'bg-amber-500' : 'bg-marvel'
+                  }`}
                   style={{
                     width: `${cacheProgress.total > 0 ? (cacheProgress.completed / cacheProgress.total) * 100 : 0}%`,
                   }}
@@ -484,7 +208,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 pt-2">
+          <div className="grid grid-cols-2 gap-3 mt-auto">
             <button
               type="button"
               onClick={async () => {
@@ -493,96 +217,106 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 showFeedback('Cache rebuild complete!', 'success');
               }}
               disabled={cacheProgress.isSyncing}
-              className={`flex items-center justify-center gap-1.5 font-semibold text-[10px] py-2 rounded-lg transition-colors cursor-pointer w-full ${
+              className={`flex items-center justify-center gap-1.5 font-semibold text-[10px] xs:text-[11px] py-3 rounded-xl transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer w-full ${
                 activeTheme.startsWith('light-')
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-800'
-                  : 'bg-neutral-900 hover:bg-neutral-800 text-white'
+                  ? 'bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800'
+                  : 'bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white'
               }`}
             >
-              <RotateCcw className="w-3 h-3" />
+              <RotateCcw className="w-3.5 h-3.5 flex-shrink-0" />
               Force Rebuild
             </button>
             <button
               type="button"
               onClick={() => setShowPurgeConfirm(true)}
               disabled={cacheProgress.isSyncing || isPurging}
-              className={`flex items-center justify-center gap-1.5 font-semibold text-[10px] py-2 rounded-lg transition-colors cursor-pointer w-full ${
+              className={`flex items-center justify-center gap-1.5 font-semibold text-[10px] xs:text-[11px] py-3 rounded-xl transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer w-full ${
                 activeTheme.startsWith('light-')
-                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-600'
-                  : 'bg-red-600/10 hover:bg-red-600/20 text-red-400'
+                  ? 'bg-rose-50 hover:bg-rose-100 border border-rose-100 text-rose-600'
+                  : 'bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 text-red-400'
               }`}
             >
-              <RotateCcw className="w-3 h-3" />
+              <RotateCcw className="w-3.5 h-3.5 flex-shrink-0" />
               Purge Cache
             </button>
           </div>
         </div>
 
         {/* Item 2: Backups & Sync System */}
-        <div className="flex flex-col justify-between gap-4">
-          <div className="flex flex-col gap-2.5">
-            <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-200/40 dark:border-neutral-900">
-              <span className={`text-xs uppercase font-bold tracking-wider font-display whitespace-nowrap ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-300'}`}>
-                Backups &amp; Sync
+        <div className="flex flex-col justify-between gap-4 h-full">
+          <div className="flex flex-col gap-3">
+            <div className={`flex items-center justify-between gap-2 border-b pb-2 ${activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-900/60'}`}>
+              <span className={`text-xs uppercase font-bold tracking-wider font-display whitespace-nowrap ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-400'}`}>
+                Backups &amp; Sync System
               </span>
-              <span className={`font-mono text-[9px] font-bold rounded-full px-2 py-0.5 uppercase tracking-wider whitespace-nowrap ${
+              <span className={`font-mono text-[9px] font-bold border rounded-full px-2.5 py-0.5 uppercase tracking-wider whitespace-nowrap ${
                 hasLocalData
-                  ? 'bg-emerald-500/10 text-emerald-500'
+                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
                   : activeTheme.startsWith('light-')
-                  ? 'bg-slate-100 text-slate-500'
-                  : 'bg-neutral-900 text-neutral-400'
+                  ? 'bg-slate-100 border-slate-200 text-slate-500'
+                  : 'bg-neutral-900 border-neutral-800 text-neutral-400'
               }`}>
                 {hasLocalData ? 'Archive Ready' : 'Database Empty'}
               </span>
             </div>
 
             <p className={`text-[10px] leading-relaxed text-left ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
-              Export or restore your offline JSON database backup to sync watch history across terminals.
+              Export or restore your offline S.H.I-E.L.D. database JSON files locally to synchronize progress across active stations.
             </p>
 
-            {/* Metrics */}
-            <div className="grid grid-cols-2 gap-2 text-[10px] font-mono pt-1">
-              <div className="flex flex-col gap-0.5">
-                <span className={activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}>Last Backup</span>
-                <span className={`font-semibold ${activeTheme.startsWith('light-') ? 'text-slate-700' : 'text-neutral-300'}`}>
-                  {formatTime(lastBackup)}
-                </span>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className={activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}>Last Restore</span>
-                <span className={`font-semibold ${activeTheme.startsWith('light-') ? 'text-slate-700' : 'text-neutral-300'}`}>
-                  {formatTime(lastRestore)}
-                </span>
+            {/* Metrics Panel */}
+            <div className="flex flex-col gap-2">
+              <div className={`grid grid-cols-2 gap-x-4 gap-y-1.5 text-[10px] font-mono border-t pt-2.5 ${
+                activeTheme.startsWith('light-') ? 'border-slate-200/80' : 'border-neutral-900/40'
+              }`}>
+                <div className="flex flex-col gap-0.5">
+                  <span className={activeTheme.startsWith('light-') ? 'text-slate-400 font-medium' : 'text-neutral-500'}>Last Backup</span>
+                  <span className={`font-semibold ${activeTheme.startsWith('light-') ? 'text-slate-700' : 'text-neutral-300'}`}>
+                    {formatTime(lastBackup)}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className={activeTheme.startsWith('light-') ? 'text-slate-400 font-medium' : 'text-neutral-500'}>Last Restore</span>
+                  <span className={`font-semibold ${activeTheme.startsWith('light-') ? 'text-slate-700' : 'text-neutral-300'}`}>
+                    {formatTime(lastRestore)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-
-          <div className="grid grid-cols-2 gap-2 pt-2">
+          <div className="grid grid-cols-2 gap-3 mt-auto">
             <button
               type="button"
               onClick={onExportClick}
               disabled={isRestoring}
-              className={`flex items-center justify-center gap-1.5 font-semibold text-[10px] py-2 rounded-lg transition-colors cursor-pointer w-full ${
+              className={`flex items-center justify-center gap-1.5 font-semibold text-[10px] xs:text-[11px] py-3 rounded-xl transition-colors focus:outline-none whitespace-nowrap overflow-hidden cursor-pointer w-full ${
                 activeTheme.startsWith('light-')
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-800'
-                  : 'bg-neutral-900 hover:bg-neutral-800 text-white'
-              }`}
+                  ? 'bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800'
+                  : 'bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white'
+              } ${isRestoring ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              <Download className="w-3 h-3" />
-              Export Backup
+              <Download className="w-3.5 h-3.5 flex-shrink-0" />
+              Export JSON Backup
             </button>
             {isRestoring ? (
-              <div className="flex items-center justify-center gap-1.5 text-[10px] py-2 rounded-lg opacity-50 cursor-not-allowed">
+              <div className={`flex items-center justify-center gap-1.5 text-[10px] xs:text-[11px] py-3 rounded-xl whitespace-nowrap overflow-hidden select-none cursor-not-allowed w-full ${
+                activeTheme.startsWith('light-')
+                  ? 'bg-slate-100/55 text-slate-400 border border-slate-200/60'
+                  : 'bg-neutral-900/40 text-neutral-500 border border-neutral-800/65'
+              }`}>
+                <div className={`w-3.5 h-3.5 border-2 rounded-full animate-spin flex-shrink-0 ${
+                  activeTheme.startsWith('light-') ? 'border-slate-300 border-t-marvel' : 'border-neutral-600 border-t-marvel'
+                }`} />
                 <span className="truncate">{restoreProgress || 'Restoring...'}</span>
               </div>
             ) : (
-              <label className={`flex items-center justify-center gap-1.5 font-semibold text-[10px] py-2 rounded-lg cursor-pointer transition-colors w-full text-center ${
+              <label className={`flex items-center justify-center gap-1.5 font-semibold text-[10px] xs:text-[11px] py-3 rounded-xl cursor-pointer transition-colors whitespace-nowrap overflow-hidden w-full text-center ${
                 activeTheme.startsWith('light-')
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-800'
-                  : 'bg-neutral-900 hover:bg-neutral-800 text-white'
+                  ? 'bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800'
+                  : 'bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white'
               }`}>
-                <Upload className="w-3 h-3" />
-                Restore Backup
+                <Upload className="w-3.5 h-3.5 flex-shrink-0" />
+                Restore JSON Backup
                 <input
                   type="file"
                   accept=".json"
@@ -594,50 +328,56 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </div>
         </div>
 
-        {/* Item 3: Account & Ledger Registry */}
-        <div className="flex flex-col justify-between gap-4">
-          <div className="flex flex-col gap-2.5">
-            <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-200/40 dark:border-neutral-900">
-              <span className={`text-xs uppercase font-bold tracking-wider font-display whitespace-nowrap ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-300'}`}>
-                Account Registry
+        {/* Item 3: Application & Account Management */}
+        <div className="flex flex-col justify-between gap-4 h-full">
+          <div className="flex flex-col gap-3">
+            <div className={`flex items-center justify-between gap-2 border-b pb-2 ${activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-900/60'}`}>
+              <span className={`text-xs uppercase font-bold tracking-wider font-display whitespace-nowrap ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-400'}`}>
+                Account &amp; Ledger Registry
               </span>
-              <span className={`font-mono text-[9px] font-bold rounded-full px-2 py-0.5 uppercase tracking-wider whitespace-nowrap ${
+              <span className={`font-mono text-[9px] font-bold border rounded-full px-2.5 py-0.5 uppercase tracking-wider whitespace-nowrap ${
                 authToken
-                  ? 'bg-emerald-500/10 text-emerald-500'
-                  : 'bg-amber-500/10 text-amber-500'
+                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                  : activeTheme.startsWith('light-')
+                  ? 'bg-amber-500/10 border-amber-500/20 text-amber-600'
+                  : 'bg-amber-500/10 border-amber-500/20 text-amber-500'
               }`}>
                 {authToken ? 'Cloud Secure' : 'Sandbox Active'}
               </span>
             </div>
 
             <p className={`text-[10px] leading-relaxed text-left ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
-              Manage local application state, clear offline data, or permanently remove registered cloud profile.
+              Reset your application status, clear offline state, or permanently delete your cloud account from S.H.I-E.L.D. registry.
             </p>
 
-            <div className="grid grid-cols-2 gap-2 text-[10px] font-mono pt-1">
-              <div className="flex flex-col gap-0.5">
-                <span className={activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}>Agent Status</span>
-                <span className={`font-semibold ${activeTheme.startsWith('light-') ? 'text-slate-700' : 'text-neutral-300'}`}>
-                  {authToken ? 'Authorized' : 'Offline Sandbox'}
-                </span>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className={activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}>Terminals</span>
-                <span className={`font-semibold ${activeTheme.startsWith('light-') ? 'text-slate-700' : 'text-neutral-300'}`}>
-                  {user?.sessions ? user.sessions.filter((s: any) => s.status === 'Active').length : 1} Active
-                </span>
+            {/* Metrics Panel */}
+            <div className="flex flex-col gap-2">
+              <div className={`grid grid-cols-2 gap-x-4 gap-y-1.5 text-[10px] font-mono border-t pt-2.5 ${
+                activeTheme.startsWith('light-') ? 'border-slate-200/80' : 'border-neutral-900/40'
+              }`}>
+                <div className="flex flex-col gap-0.5">
+                  <span className={activeTheme.startsWith('light-') ? 'text-slate-400 font-medium' : 'text-neutral-500'}>Agent Status</span>
+                  <span className={`font-semibold ${activeTheme.startsWith('light-') ? 'text-slate-700' : 'text-neutral-300'}`}>
+                    {authToken ? 'Authorized' : 'Offline Sandbox'}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className={activeTheme.startsWith('light-') ? 'text-slate-400 font-medium' : 'text-neutral-500'}>Terminals</span>
+                  <span className={`font-semibold ${activeTheme.startsWith('light-') ? 'text-slate-700' : 'text-neutral-300'}`}>
+                    {user?.sessions ? user.sessions.filter((s: any) => s.status === 'Active').length : 1} Active
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-
-          <div className={`grid gap-2 w-full pt-2 ${authToken ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <div className={`grid gap-3 w-full mt-auto ${authToken ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <button
               type="button"
               onClick={handleResetProgress}
-              className={`w-full font-semibold text-[10px] py-2 rounded-lg transition-colors cursor-pointer ${
+              className={`w-full font-semibold text-[10px] xs:text-[11px] py-3 rounded-xl transition-colors focus:outline-none cursor-pointer border ${
                 activeTheme.startsWith('light-')
-                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-600'
-                  : 'bg-red-600/10 hover:bg-red-600/20 text-red-500'
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-100'
+                  : 'bg-red-600/10 hover:bg-red-600/20 text-red-500 border-red-500/20'
               }`}
             >
               Reset Application
@@ -647,10 +387,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <button
                 type="button"
                 onClick={() => setShowDeleteAccountModal(true)}
-                className={`w-full font-semibold text-[10px] py-2 rounded-lg transition-colors cursor-pointer ${
+                className={`w-full font-semibold text-[10px] xs:text-[11px] py-3 rounded-xl transition-colors focus:outline-none cursor-pointer border ${
                   activeTheme.startsWith('light-')
-                    ? 'bg-red-50 hover:bg-red-100 text-red-600'
-                    : 'bg-rose-600/10 hover:bg-rose-600/20 text-rose-500'
+                    ? 'bg-red-50 hover:bg-red-100 text-red-600 border-red-100'
+                    : 'bg-rose-600/10 hover:bg-rose-600/20 text-rose-500 border-rose-500/20'
                 }`}
               >
                 Delete Account

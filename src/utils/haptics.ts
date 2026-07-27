@@ -9,9 +9,6 @@ export function triggerHaptic(type: HapticPattern = 'light'): void {
     return;
   }
 
-  const isEnabled = localStorage.getItem('mcu_haptics_enabled') !== 'false';
-  if (!isEnabled) return;
-
   try {
     switch (type) {
       case 'selection':
