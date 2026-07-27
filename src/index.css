@@ -1,0 +1,412 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --color-marvel: #e62429;
+
+  /* Cleaner, sharper, subtle border-radius mapping */
+  --radius-3xl: 10px;
+  --radius-2xl: 8px;
+  --radius-xl: 6px;
+  --radius-lg: 4px;
+  --radius-md: 3px;
+  --radius-sm: 2px;
+}
+
+/* Custom Text Selection Theme */
+::selection {
+  background-color: #e62429 !important;
+  color: #ffffff !important;
+}
+
+::-moz-selection {
+  background-color: #e62429 !important;
+  color: #ffffff !important;
+}
+
+/* Custom CSS Scrollbar - Cross-Browser Marvel Red theme */
+html, body, * {
+  scrollbar-width: thin;
+  scrollbar-color: #e62429 #000000;
+}
+
+.theme-light, .theme-light * {
+  scrollbar-color: #e62429 #f1f5f9;
+}
+
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+*::-webkit-scrollbar-track {
+  background: #000000;
+}
+.theme-light *::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+*::-webkit-scrollbar-thumb {
+  background: #e62429;
+  border-radius: 4px;
+}
+
+/* Thin Scrollbar specific styling for table horizontal scrollbar */
+.thin-scrollbar::-webkit-scrollbar {
+  height: 3px;
+  width: 3px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(230, 36, 41, 0.45);
+  border-radius: 99px;
+  transition: background 0.2s ease;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(230, 36, 41, 0.85);
+}
+
+/* Theme overrides for thin scrollbar */
+.theme-cosmic .thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.45);
+}
+.theme-cosmic .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.85);
+}
+
+.theme-asgardian .thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.45);
+}
+.theme-asgardian .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.85);
+}
+
+/* Hide scrollbar for Chrome, Safari, Opera and Firefox */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Safe area & custom utility presets */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-layer,
+.recharts-rectangle,
+.recharts-active-dot,
+.recharts-bar,
+.recharts-line,
+.recharts-responsive-container,
+.recharts-cartesian-grid,
+.recharts-cartesian-axis,
+.recharts-tooltip-wrapper {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  user-select: none !important;
+}
+
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.recharts-layer:focus,
+.recharts-rectangle:focus,
+*:focus {
+  outline: none !important;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #000000;
+  color: #f3f4f6;
+  overscroll-behavior-y: contain;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Pulsing effect for glowing active widgets */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(230, 36, 41, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(230, 36, 41, 0.8);
+  }
+}
+
+/* Smooth, slow 3D rotation animation for Infinity Stones */
+@keyframes rotate3dSlow {
+  0% {
+    transform: rotateY(0deg) rotateX(8deg);
+  }
+  50% {
+    transform: rotateY(180deg) rotateX(-8deg);
+  }
+  100% {
+    transform: rotateY(360deg) rotateX(8deg);
+  }
+}
+
+.animate-rotate-3d {
+  animation: rotate3dSlow 12s linear infinite;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.pulse-red-glow {
+  animation: pulseGlow 2.5s infinite;
+}
+
+/* Glassmorphism utility card border styles */
+.glass-card {
+  background: rgba(8, 8, 8, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.glass-card-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-4px);
+  background: rgba(25, 29, 44, 0.8);
+  border-color: rgba(230, 36, 41, 0.4);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.7);
+}
+
+/* Confetti animation */
+@keyframes confettiFall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100dvh) rotate(360deg); opacity: 0; }
+}
+
+.confetti-particle {
+  position: fixed;
+  z-index: 1000;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  animation: confettiFall 4s linear forwards;
+}
+
+/* Smooth active tab indicator bubble styling */
+.active-nav-bubble {
+  position: relative;
+}
+.active-nav-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 4px;
+  background-color: #e62429;
+  border-radius: 99px;
+  box-shadow: 0 0 8px #e62429;
+}
+
+/* Fluid responsive text scaling for short contents to prevent wrapping */
+.text-scale-single {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(10px, 2vw, 13px);
+}
+
+.text-scale-stat {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(16px, 3.2vw, 24px);
+}
+
+.text-scale-badge {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(8px, 1.5vw, 10px);
+}
+
+/* ==========================================================================
+   CENTRALIZED LIGHT THEME STYLING & ADAPTIVE OVERRIDES
+   ========================================================================== */
+
+.theme-light body,
+body.theme-light {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Light Theme Card System */
+.theme-light .glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  color: #0f172a;
+}
+
+.theme-light .glass-card-hover:hover {
+  transform: translateY(-4px);
+  background: #ffffff;
+  border-color: rgba(230, 36, 41, 0.5);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.12);
+}
+
+/* Light Theme Background Overrides for Dark Utilities */
+.theme-light .bg-black,
+.theme-light .bg-neutral-950,
+.theme-light .bg-neutral-950\/90,
+.theme-light .bg-neutral-950\/80,
+.theme-light .bg-neutral-950\/95,
+.theme-light .bg-neutral-950\/98 {
+  background-color: #ffffff;
+}
+
+.theme-light .bg-neutral-900,
+.theme-light .bg-neutral-900\/60,
+.theme-light .bg-neutral-900\/80,
+.theme-light .bg-neutral-900\/90 {
+  background-color: #f8fafc;
+}
+
+.theme-light .bg-neutral-850,
+.theme-light .bg-neutral-800 {
+  background-color: #f1f5f9;
+}
+
+/* Light Theme Typography Overrides */
+.theme-light .text-white,
+.theme-light .text-neutral-100,
+.theme-light .text-neutral-200 {
+  color: #0f172a;
+}
+
+.theme-light .text-neutral-300,
+.theme-light .text-neutral-400 {
+  color: #334155;
+}
+
+.theme-light .text-neutral-500 {
+  color: #64748b;
+}
+
+.theme-light .text-neutral-600 {
+  color: #94a3b8;
+}
+
+/* Light Theme Border Overrides */
+.theme-light .border-neutral-900,
+.theme-light .border-neutral-850,
+.theme-light .border-neutral-800,
+.theme-light .border-neutral-700,
+.theme-light .border-neutral-900\/60,
+.theme-light .border-neutral-800\/60,
+.theme-light .border-red-950\/40,
+.theme-light .border-red-950\/20 {
+  border-color: #cbd5e1;
+}
+
+/* Light Theme Form Elements */
+.theme-light input[type="text"],
+.theme-light input[type="password"],
+.theme-light input[type="search"],
+.theme-light input[type="date"],
+.theme-light textarea,
+.theme-light select {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.theme-light input::placeholder,
+.theme-light textarea::placeholder {
+  color: #94a3b8;
+}
+
+.theme-light input:focus,
+.theme-light textarea:focus,
+.theme-light select:focus {
+  background-color: #ffffff;
+  border-color: #e62429;
+}
+
+/* Light Theme Tables & Headers */
+.theme-light table {
+  color: #0f172a;
+}
+.theme-light th {
+  background-color: #f1f5f9;
+  color: #475569;
+  border-color: #e2e8f0;
+}
+.theme-light td {
+  border-color: #e2e8f0;
+}
+.theme-light tr:hover td {
+  background-color: #f8fafc;
+}
+
+/* Light Theme Header & Navigation */
+.theme-light header {
+  background-color: rgba(255, 255, 255, 0.92);
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.theme-light nav {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-color: #e2e8f0;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.theme-light .active-nav-bubble::after {
+  background-color: #e62429;
+  box-shadow: 0 0 6px rgba(230, 36, 41, 0.5);
+}
+
+/* Light Theme Modals & Dialogs */
+.theme-light #shared-confirmation-modal-backdrop,
+.theme-light #auth-gateway-backdrop {
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+}
+
+.theme-light #shared-confirmation-modal-content,
+.theme-light #auth-gateway-card {
+  background-color: #ffffff;
+  color: #0f172a;
+  border-color: #e2e8f0;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Light Theme Progress Ring & Charts */
+.theme-light .recharts-default-tooltip {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1) !important;
+}
+
+.theme-light .recharts-cartesian-grid-horizontal line,
+.theme-light .recharts-cartesian-grid-vertical line {
+  stroke: #e2e8f0 !important;
+}
+
+.theme-light .recharts-text {
+  fill: #475569 !important;
+}
+
+/* Hero & Card Special Overrides in Light Theme */
+.theme-light #dashboard-hero-countdown {
+  background: linear-gradient(135deg, #ffffff 0%, #fef2f2 50%, #ffffff 100%) !important;
+  border-color: rgba(230, 36, 41, 0.25) !important;
+  box-shadow: 0 10px 30px -5px rgba(230, 36, 41, 0.08) !important;
+}
+

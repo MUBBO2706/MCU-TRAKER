@@ -1,0 +1,8 @@
+{
+  "name": "Nexus: MCU Companion v2.5F",
+  "description": "Premium, offline MCU tracker with interactive timelines, character journeys, and deep analytics in a sleek, mobile-first OLED interface.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
