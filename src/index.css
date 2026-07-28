@@ -410,3 +410,12 @@ body.theme-light {
   box-shadow: 0 10px 30px -5px rgba(230, 36, 41, 0.08) !important;
 }
 
+/* Battery Saver Mode: Instantly freeze high-energy animation loops, glows, and transitions */
+[data-pwa-battery-saver="true"] * {
+  animation-duration: 0.001s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001s !important;
+  box-shadow: none !important;
+}
+
+

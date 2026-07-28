@@ -180,3 +180,43 @@ export async function getDeviceModel(): Promise<string> {
   }
   return `Device [${screenSpec}]`;
 }
+
+export type DisplayMode = 'browser' | 'standalone' | 'minimal-ui' | 'fullscreen' | 'unknown';
+
+export function getDisplayMode(): DisplayMode {
+  if (typeof window === 'undefined') return 'unknown';
+
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    return 'standalone';
+  }
+  if (window.matchMedia('(display-mode: minimal-ui)').matches) {
+    return 'minimal-ui';
+  }
+  if (window.matchMedia('(display-mode: fullscreen)').matches) {
+    return 'fullscreen';
+  }
+  if ((window.navigator as any).standalone === true) {
+    return 'standalone';
+  }
+  
+  return 'browser';
+}
+
+export function isInstalledPWA(): boolean {
+  const mode = getDisplayMode();
+  return mode === 'standalone' || mode === 'minimal-ui' || mode === 'fullscreen';
+}
+
+export function triggerHapticFeedback(pattern: number | number[] = 15) {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
+  try {
+    const savedHaptics = localStorage.getItem('mcu_pwa_haptics');
+    const hapticsEnabled = savedHaptics === 'false' ? false : true;
+    if (hapticsEnabled && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(pattern);
+    }
+  } catch (e) {
+    console.warn('Haptic feedback failed', e);
+  }
+}
+

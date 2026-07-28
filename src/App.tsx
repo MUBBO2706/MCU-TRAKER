@@ -48,7 +48,7 @@ import { ConfirmationModal } from './components/Common/ConfirmationModal';
 // Import Custom Utilities and Hooks
 import { formatToIndianDateTime } from './utils/date';
 import { triggerConfettiParticles } from './utils/confetti';
-import { getDeviceModel } from './utils/device';
+import { getDeviceModel, triggerHapticFeedback } from './utils/device';
 import { useCountdown } from './hooks/useCountdown';
 import { useBodyScrollLock } from './hooks/useBodyScrollLock';
 
@@ -115,6 +115,7 @@ export default function App() {
   // Exact set-state compatible wrapper functions to trigger instantaneous navigation
   const setActiveTab = (tabOrFunc: any) => {
     const tab = typeof tabOrFunc === 'function' ? tabOrFunc(activeTab) : tabOrFunc;
+    triggerHapticFeedback(10);
     navigate(`/${tab}`);
   };
 
@@ -609,6 +610,80 @@ export default function App() {
 
     return () => {
       unsubscribe();
+    };
+  }, []);
+
+  // Battery-Aware Performance Governor logic
+  useEffect(() => {
+    let batteryInstance: any = null;
+
+    const updateBatterySaverStatus = (battery?: any) => {
+      const governor = localStorage.getItem('mcu_pwa_governor') || 'auto';
+      let isSaverActive = false;
+
+      if (governor === 'saver') {
+        isSaverActive = true;
+      } else if (governor === 'auto' && battery) {
+        if (battery.level <= 0.20 && !battery.charging) {
+          isSaverActive = true;
+        }
+      }
+
+      if (isSaverActive) {
+        document.documentElement.setAttribute('data-pwa-battery-saver', 'true');
+      } else {
+        document.documentElement.removeAttribute('data-pwa-battery-saver');
+      }
+    };
+
+    // Initial check
+    updateBatterySaverStatus();
+
+    // Listen for storage changes
+    const handleStorageChange = () => {
+      updateBatterySaverStatus(batteryInstance);
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    // Setup battery status API
+    if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
+      (navigator as any).getBattery().then((battery: any) => {
+        batteryInstance = battery;
+        updateBatterySaverStatus(battery);
+
+        const handleBatteryUpdates = () => {
+          updateBatterySaverStatus(battery);
+        };
+
+        battery.addEventListener('levelchange', handleBatteryUpdates);
+        battery.addEventListener('chargingchange', handleBatteryUpdates);
+
+        // Also run a local interval to ensure we sync state when settings change
+        const interval = setInterval(() => {
+          updateBatterySaverStatus(battery);
+        }, 1500);
+
+        return () => {
+          battery.removeEventListener('levelchange', handleBatteryUpdates);
+          battery.removeEventListener('chargingchange', handleBatteryUpdates);
+          clearInterval(interval);
+        };
+      }).catch((e: any) => {
+        console.warn('Battery status check rejected in App:', e);
+      });
+    } else {
+      // Periodic check if battery API not supported
+      const interval = setInterval(() => {
+        updateBatterySaverStatus();
+      }, 1500);
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('storage', handleStorageChange);
+      };
+    }
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -1375,6 +1450,7 @@ export default function App() {
     }
 
     // Success feedback toasts for user watch-tracking events
+    triggerHapticFeedback(15);
     const title = fullTitle.length > 18 ? fullTitle.slice(0, 15) + '...' : fullTitle;
     if (data.status && data.status !== prev.status) {
       showFeedback(`"${title}": ${data.status.toUpperCase()}`, 'success');
@@ -1392,10 +1468,13 @@ export default function App() {
     const count = stanLeeTapCount + 1;
     setStanLeeTapCount(count);
     if (count >= 5) {
+      triggerHapticFeedback([15, 60, 20]);
       setDeveloperMode(true);
       triggerConfettiParticles();
       showFeedback('Developer Mode active!', 'success');
       setStanLeeTapCount(0);
+    } else {
+      triggerHapticFeedback(10);
     }
   };
 

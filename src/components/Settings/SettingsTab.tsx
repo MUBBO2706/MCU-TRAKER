@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Download, Upload, Database, RotateCcw, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Download, Upload, Database, RotateCcw, Settings, Zap, Smartphone, Sparkles, Cpu } from 'lucide-react';
 import { CacheProgress } from '../Profile/ProfileTab';
 import { ConfirmationModal } from '../Common/ConfirmationModal';
 import { ThemeType, ThemeMode } from '../../types';
@@ -49,6 +49,105 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [isPurging, setIsPurging] = useState(false);
   const [lastBackup, setLastBackup] = useState<string | null>(() => user?.preferences?.lastBackupAt || localStorage.getItem('mcu_last_backup_time'));
   const [lastRestore, setLastRestore] = useState<string | null>(() => user?.preferences?.lastRestoreAt || localStorage.getItem('mcu_last_restore_time'));
+
+  // PWA Mode Detection
+  const [isPwa, setIsPwa] = useState(false);
+  const [displayMode, setDisplayMode] = useState<string>('browser');
+  
+  // States for Battery Status API
+  const [batterySupported, setBatterySupported] = useState(false);
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
+  const [isCharging, setIsCharging] = useState<boolean | null>(null);
+  
+  // States for Device Orientation API (Gyroscope)
+  const [gyroSupported, setGyroSupported] = useState(false);
+  const [gyroPermissionStatus, setGyroPermissionStatus] = useState<string>('unknown');
+  
+  // States for Haptics (Vibration API)
+  const [hapticsSupported, setHapticsSupported] = useState(false);
+
+  // Load initial settings
+  const [performanceGovernor, setPerformanceGovernor] = useState<'high' | 'saver' | 'auto'>(() => {
+    try {
+      const saved = localStorage.getItem('mcu_pwa_governor');
+      return (saved as any) || 'auto';
+    } catch {
+      return 'auto';
+    }
+  });
+
+  const [gyroParallax, setGyroParallax] = useState<'off' | 'on'>(() => {
+    try {
+      const saved = localStorage.getItem('mcu_pwa_parallax');
+      return (saved as any) || 'on';
+    } catch {
+      return 'on';
+    }
+  });
+
+  const [hapticFeedback, setHapticFeedback] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('mcu_pwa_haptics');
+      return saved === 'false' ? false : true;
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    // 1. PWA Standalone Mode Detection
+    const detectPwa = () => {
+      let mode = 'browser';
+      if (typeof window !== 'undefined') {
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+          mode = 'standalone';
+        } else if (window.matchMedia('(display-mode: minimal-ui)').matches) {
+          mode = 'minimal-ui';
+        } else if (window.matchMedia('(display-mode: fullscreen)').matches) {
+          mode = 'fullscreen';
+        } else if ((window.navigator as any).standalone === true) {
+          mode = 'standalone';
+        }
+        setDisplayMode(mode);
+        setIsPwa(mode !== 'browser');
+      }
+    };
+    detectPwa();
+
+    // 2. Battery Status API Detection & Status Query
+    if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
+      setBatterySupported(true);
+      (navigator as any).getBattery().then((battery: any) => {
+        setBatteryLevel(Math.round(battery.level * 100));
+        setIsCharging(battery.charging);
+
+        // Listen for updates
+        const handleLevelChange = () => setBatteryLevel(Math.round(battery.level * 100));
+        const handleChargingChange = () => setIsCharging(battery.charging);
+
+        battery.addEventListener('levelchange', handleLevelChange);
+        battery.addEventListener('chargingchange', handleChargingChange);
+
+        return () => {
+          battery.removeEventListener('levelchange', handleLevelChange);
+          battery.removeEventListener('chargingchange', handleChargingChange);
+        };
+      }).catch((e: any) => {
+        console.warn('Battery status API query rejected:', e);
+      });
+    }
+
+    // 3. Gyroscope Sensor Capability Detection
+    if (typeof window !== 'undefined') {
+      const hasGyro = 'DeviceOrientationEvent' in window;
+      setGyroSupported(hasGyro);
+    }
+
+    // 4. Haptic Feedback Motor Detection
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      setHapticsSupported(true);
+    }
+  }, []);
 
   React.useEffect(() => {
     if (user?.preferences?.lastBackupAt) {
@@ -148,6 +247,211 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           ))}
         </div>
       </div>
+
+      {/* PWA Customization Section */}
+      {(isPwa || developerMode) && (
+        <div className="flex flex-col gap-5 pt-5 border-t border-neutral-900/40" id="settings-pwa-customization">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex flex-col gap-1 max-w-[70%]">
+              <span className={`text-xs uppercase font-bold tracking-wider font-display flex items-center gap-1.5 ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-400'}`}>
+                <Smartphone className="w-4 h-4 text-marvel" />
+                PWA Native Customization {developerMode && !isPwa && <span className="text-[9px] lowercase font-normal italic px-2 py-0.5 bg-marvel/10 text-marvel rounded-full ml-2">Simulated</span>}
+              </span>
+              <p className={`text-[10px] leading-relaxed text-left ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
+                Optimize physical device resources, activate motion haptics, and coordinate tactile hardware integration.
+              </p>
+            </div>
+            {/* Display Mode Indicator Badge */}
+            <div className={`font-mono text-[9px] font-bold border rounded-full px-2.5 py-1 uppercase tracking-wider ${
+              isPwa 
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                : 'bg-slate-500/10 border-slate-500/20 text-slate-400'
+            }`}>
+              Mode: {displayMode.replace('-', ' ')}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+            {/* 1. Battery-Aware Performance Governor */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between border-b pb-1.5 border-neutral-900/20">
+                <span className={`text-[11px] font-semibold flex items-center gap-1 ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  Performance Governor
+                </span>
+                {batterySupported ? (
+                  <span className={`font-mono text-[9px] font-bold ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
+                    {batteryLevel !== null ? `${batteryLevel}%` : '---'} {isCharging ? '🔌' : '🔋'}
+                  </span>
+                ) : (
+                  <span className={`font-mono text-[9px] ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-600'}`}>
+                    Unsupported
+                  </span>
+                )}
+              </div>
+              <p className={`text-[10px] leading-relaxed text-left ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
+                Throttles heavy particle effects, limits rendering cycles, and defers automatic background pre-caching when device battery is under 20% and discharging.
+              </p>
+              
+              <div className="flex flex-col gap-1.5 mt-1">
+                {[
+                  { id: 'high', name: 'High Performance', desc: 'Max visuals & asset pre-caching' },
+                  { id: 'saver', name: 'Battery Saver', desc: 'Disable particles & pause background sync' },
+                  { id: 'auto', name: 'Battery-Aware (Auto)', desc: 'Governor coordinates automatically' }
+                ].map((gov) => (
+                  <button
+                    key={gov.id}
+                    type="button"
+                    onClick={() => {
+                      setPerformanceGovernor(gov.id as any);
+                      localStorage.setItem('mcu_pwa_governor', gov.id);
+                      updatePreference('performanceGovernor', gov.id);
+                      showFeedback(`Governor set to ${gov.name}`, 'success');
+                    }}
+                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-center gap-0.5 transition-all cursor-pointer h-[52px] ${
+                      performanceGovernor === gov.id
+                        ? 'border-marvel bg-marvel/5 shadow-sm shadow-marvel/5 font-bold'
+                        : activeTheme.startsWith('light-')
+                        ? 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
+                        : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
+                    }`}
+                  >
+                    <span className={`text-[10px] font-semibold leading-none ${performanceGovernor === gov.id ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
+                      {gov.name}
+                    </span>
+                    <span className={`text-[8px] font-medium leading-tight truncate ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
+                      {gov.desc}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Gyroscope Parallax Feedback */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between border-b pb-1.5 border-neutral-900/20">
+                <span className={`text-[11px] font-semibold flex items-center gap-1 ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                  Parallax Feedback
+                </span>
+                {gyroSupported ? (
+                  <span className={`font-mono text-[9px] text-emerald-500 font-bold`}>
+                    ACTIVE
+                  </span>
+                ) : (
+                  <span className={`font-mono text-[9px] ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-600'}`}>
+                    Unsupported
+                  </span>
+                )}
+              </div>
+              <p className={`text-[10px] leading-relaxed text-left ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
+                Engages responsive 3D depth-tilt feedback on main visual assets based on gyroscope sensors, with automated elegant fallback to mouse movement on desktops.
+              </p>
+              
+              <div className="flex flex-col gap-1.5 mt-1">
+                {[
+                  { id: 'on', name: 'Interactive Depth On', desc: 'Sensing active orientation & mouse' },
+                  { id: 'off', name: 'Disable Motion', desc: 'Flat static layouts only' }
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={async () => {
+                      if (opt.id === 'on' && typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+                        try {
+                          const status = await (DeviceOrientationEvent as any).requestPermission();
+                          setGyroPermissionStatus(status);
+                          if (status === 'granted') {
+                            setGyroSupported(true);
+                          }
+                        } catch (e) {
+                          console.warn('Gyro sensor permission rejected', e);
+                        }
+                      }
+                      setGyroParallax(opt.id as any);
+                      localStorage.setItem('mcu_pwa_parallax', opt.id);
+                      updatePreference('gyroParallax', opt.id);
+                      showFeedback(`Parallax set to ${opt.name}`, 'success');
+                    }}
+                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-center gap-0.5 transition-all cursor-pointer h-[52px] ${
+                      gyroParallax === opt.id
+                        ? 'border-marvel bg-marvel/5 shadow-sm shadow-marvel/5 font-bold'
+                        : activeTheme.startsWith('light-')
+                        ? 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
+                        : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
+                    }`}
+                  >
+                    <span className={`text-[10px] font-semibold leading-none ${gyroParallax === opt.id ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
+                      {opt.name}
+                    </span>
+                    <span className={`text-[8px] font-medium leading-tight truncate ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
+                      {opt.desc}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. Tactile Haptic Feedback */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between border-b pb-1.5 border-neutral-900/20">
+                <span className={`text-[11px] font-semibold flex items-center gap-1 ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
+                  <Cpu className="w-3.5 h-3.5 text-emerald-500" />
+                  Tactile Haptics
+                </span>
+                {hapticsSupported ? (
+                  <span className={`font-mono text-[9px] text-emerald-500 font-bold`}>
+                    ACTIVE
+                  </span>
+                ) : (
+                  <span className={`font-mono text-[9px] ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-600'}`}>
+                    Unsupported
+                  </span>
+                )}
+              </div>
+              <p className={`text-[10px] leading-relaxed text-left ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
+                Triggers mechanical touch feedback during interactive event cycles: tab switching, watch lists modifications, and developer easter eggs.
+              </p>
+              
+              <div className="flex flex-col gap-1.5 mt-1">
+                {[
+                  { id: 'on', name: 'Haptic Feedback On', desc: 'Vibrate on user interaction' },
+                  { id: 'off', name: 'Disable Tactile', desc: 'Purely visual feedback' }
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      const enabled = opt.id === 'on';
+                      setHapticFeedback(enabled);
+                      localStorage.setItem('mcu_pwa_haptics', enabled ? 'true' : 'false');
+                      updatePreference('hapticFeedback', enabled);
+                      if (enabled && typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+                        navigator.vibrate([15]);
+                      }
+                      showFeedback(`Tactile haptics ${enabled ? 'enabled' : 'disabled'}`, 'success');
+                    }}
+                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-center gap-0.5 transition-all cursor-pointer h-[52px] ${
+                      ((hapticFeedback && opt.id === 'on') || (!hapticFeedback && opt.id === 'off'))
+                        ? 'border-marvel bg-marvel/5 shadow-sm shadow-marvel/5 font-bold'
+                        : activeTheme.startsWith('light-')
+                        ? 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
+                        : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
+                    }`}
+                  >
+                    <span className={`text-[10px] font-semibold leading-none ${((hapticFeedback && opt.id === 'on') || (!hapticFeedback && opt.id === 'off')) ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
+                      {opt.name}
+                    </span>
+                    <span className={`text-[8px] font-medium leading-tight truncate ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
+                      {opt.desc}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Grid for lower settings sections on Desktop using balanced column layout */}
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-5 border-t items-stretch ${activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-900/60'}`} id="settings-grid-sections">

@@ -351,6 +351,28 @@ export async function startPreCaching(force = false) {
   if (!isClient) return;
   if (currentProgress.isSyncing) return;
 
+  // Check performance governor to throttle background sync
+  const governor = localStorage.getItem('mcu_pwa_governor') || 'auto';
+  if (!force) {
+    if (governor === 'saver') {
+      console.log('Background pre-caching deferred (Battery Saver active)');
+      return;
+    }
+    if (governor === 'auto') {
+      if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
+        try {
+          const battery: any = await (navigator as any).getBattery();
+          if (battery.level <= 0.20 && !battery.charging) {
+            console.log('Background pre-caching deferred (Battery-Aware Auto: Low battery & Discharging)');
+            return;
+          }
+        } catch (e) {
+          console.warn('Battery-aware governor check failed in cache routine:', e);
+        }
+      }
+    }
+  }
+
   const alreadySynced = localStorage.getItem('mcu_assets_cached_v1') === 'true';
   if (alreadySynced && !force) {
     const urlsCount = getAllExternalUrls().length;
