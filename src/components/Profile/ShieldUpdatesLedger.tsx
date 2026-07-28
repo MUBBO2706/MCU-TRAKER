@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Database, Search, ChevronLeft, Eye, Cpu, Download, ChevronDown, FileText, Table } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import ExcelJS from 'exceljs';
 import { CustomDropdown } from '../CustomDropdown';
 import { CustomDatePicker } from '../Common/CustomDatePicker';
 
@@ -535,7 +534,7 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
     await logExportAction('PDF', sorted.length);
   };
 
-  // Excel Export (Native Excel XLSX Spreadsheet with Metadata Summary)
+  // Excel Export (Styled Excel HTML Spreadsheet with Metadata Summary)
   const handleExportCSV = async () => {
     const fileDateStr = formatToIndianDateTime(Date.now()).replace(/ /g, '_').replace(/:/g, '-');
     const exportTimestamp = formatToIndianDateTime(new Date().toISOString());
@@ -544,134 +543,125 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
     const userAgentId = user?.displayName ? `@${user.displayName}` : (user?.email ? `@${user.email.split('@')[0]}` : '@Mubbo_2706');
     const agentName = user?.fullName || user?.displayName || 'Mubasshir Sunni';
 
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Updates Ledger');
+    const escapeHtml = (str: any) => String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
 
-    // Column widths for un-truncated single line rendering
-    worksheet.columns = [
-      { width: 28 }, // TIMESTAMP
-      { width: 22 }, // CATEGORY
-      { width: 38 }, // ACTION / TITLE
-      { width: 32 }, // OLD VALUE
-      { width: 38 }, // NEW VALUE
-      { width: 22 }, // ACTION BY
-    ];
+    const rowsHtml = sorted.map((log, idx) => {
+      const rowBg = idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC';
+      const timestampStr = escapeHtml(formatToIndianDateTime(log.timestamp));
+      const sourceStr = escapeHtml(log.source || 'General');
+      const actionStr = escapeHtml(log.action);
+      const oldValStr = escapeHtml(formatPlainLogValue(log, false));
+      const newValStr = escapeHtml(formatPlainLogValue(log, true));
+      const userStr = escapeHtml(`@${log.userPerformed || 'sandbox_agent'}`);
 
-    // 1. Title Banner (Row 1)
-    worksheet.mergeCells('A1:F1');
-    const titleCell = worksheet.getCell('A1');
-    titleCell.value = 'SECURITY UPDATES LEDGER REPORT';
-    titleCell.font = { name: 'Segoe UI', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
-    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEC1D24' } };
-    titleCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
+      return `
+        <tr style="background-color: ${rowBg}; font-size: 11px;">
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; font-family: monospace; text-align: center; vertical-align: middle; white-space: nowrap;">${timestampStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: #475569; text-align: center; vertical-align: middle; white-space: nowrap;">${sourceStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: #0F172A; text-align: center; vertical-align: middle; white-space: nowrap;">${actionStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #64748B; text-align: center; vertical-align: middle; white-space: nowrap;">${oldValStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #059669; font-weight: 600; text-align: center; vertical-align: middle; white-space: nowrap;">${newValStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #DC2626; font-weight: bold; text-align: center; vertical-align: middle; white-space: nowrap;">${userStr}</td>
+        </tr>
+      `;
+    }).join('');
 
-    // 2. Subtitle (Row 2)
-    worksheet.mergeCells('A2:F2');
-    const subCell = worksheet.getCell('A2');
-    subCell.value = 'Security Audit Report | Nexus MCU Companion';
-    subCell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF94A3B8' } };
-    subCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
-    subCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
+    const excelHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Updates Ledger</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F8FAFC; }
+          table { border-collapse: collapse; white-space: nowrap; }
+          td, th { text-align: center; vertical-align: middle; white-space: nowrap; mso-wrap-style: none; }
+          .title-header { background-color: #EC1D24; color: #FFFFFF; font-size: 16pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 12px; border: 1px solid #B91C1C; white-space: nowrap; }
+          .subtitle { background-color: #0F172A; color: #94A3B8; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px; font-weight: 600; white-space: nowrap; }
+          .summary-label { background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap; }
+          .summary-value { background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap; }
+          .th-header { background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap; }
+        </style>
+      </head>
+      <body>
+        <table style="width: 100%; border-collapse: collapse;">
+          <!-- Top Title Banner -->
+          <tr>
+            <td colspan="6" class="title-header">SECURITY UPDATES LEDGER REPORT</td>
+          </tr>
+          <tr>
+            <td colspan="6" class="subtitle">Security Audit Report | Nexus MCU Companion</td>
+          </tr>
+          <tr><td colspan="6" style="height: 10px;"></td></tr>
 
-    // Row 3 empty spacing
+          <!-- Summary Metadata Card -->
+          <tr>
+            <td class="summary-label">Report Exported Date:</td>
+            <td class="summary-value" colspan="2">${escapeHtml(exportTimestamp)}</td>
+            <td class="summary-label">User / Agent ID:</td>
+            <td class="summary-value" colspan="2"><b>${escapeHtml(userAgentId)}</b></td>
+          </tr>
+          <tr>
+            <td class="summary-label">Agent Name:</td>
+            <td class="summary-value" colspan="2"><b>${escapeHtml(agentName)}</b></td>
+            <td class="summary-label">Search Context:</td>
+            <td class="summary-value" colspan="2">${escapeHtml(searchText)}</td>
+          </tr>
+          <tr>
+            <td class="summary-label">Search Filter:</td>
+            <td class="summary-value" colspan="2">${escapeHtml(filterText)}</td>
+            <td class="summary-label">Total Audit Record:</td>
+            <td class="summary-value" colspan="2"><b>${sorted.length} Entries</b></td>
+          </tr>
 
-    // 3. Metadata Summary Card (Rows 4-6)
-    const summaryRows = [
-      { l1: 'Report Exported Date:', v1: exportTimestamp, l2: 'User / Agent ID:', v2: userAgentId },
-      { l1: 'Agent Name:', v1: agentName, l2: 'Search Context:', v2: searchText },
-      { l1: 'Search Filter:', v1: filterText, l2: 'Total Audit Record:', v2: `${sorted.length} Entries` }
-    ];
+          <tr><td colspan="6" style="height: 15px;"></td></tr>
 
-    summaryRows.forEach((item, idx) => {
-      const rowNum = 4 + idx;
-      worksheet.mergeCells(`B${rowNum}:C${rowNum}`);
-      worksheet.mergeCells(`E${rowNum}:F${rowNum}`);
+          <!-- Data Table Headers -->
+          <tr>
+            <th class="th-header">TIMESTAMP</th>
+            <th class="th-header">CATEGORY</th>
+            <th class="th-header">ACTION / TITLE</th>
+            <th class="th-header">OLD VALUE</th>
+            <th class="th-header">NEW VALUE</th>
+            <th class="th-header">ACTION BY</th>
+          </tr>
 
-      const cellA = worksheet.getCell(`A${rowNum}`);
-      cellA.value = item.l1;
-      cellA.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFF8FAFC' } };
-      cellA.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
-      cellA.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
+          <!-- Data Rows -->
+          ${rowsHtml}
+        </table>
+      </body>
+      </html>
+    `;
 
-      const cellB = worksheet.getCell(`B${rowNum}`);
-      cellB.value = item.v1;
-      cellB.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF0F172A' } };
-      cellB.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
-      cellB.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
-
-      const cellD = worksheet.getCell(`D${rowNum}`);
-      cellD.value = item.l2;
-      cellD.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFF8FAFC' } };
-      cellD.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
-      cellD.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
-
-      const cellE = worksheet.getCell(`E${rowNum}`);
-      cellE.value = item.v2;
-      cellE.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF0F172A' } };
-      cellE.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
-      cellE.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
-    });
-
-    // Row 7 empty spacing
-
-    // 4. Table Headers (Row 8)
-    const headers = ['TIMESTAMP', 'CATEGORY', 'ACTION / TITLE', 'OLD VALUE', 'NEW VALUE', 'ACTION BY'];
-    const headerRow = worksheet.getRow(8);
-    headers.forEach((h, i) => {
-      const cell = headerRow.getCell(i + 1);
-      cell.value = h;
-      cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEC1D24' } };
-      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
-    });
-
-    // 5. Data Rows (Row 9 onwards)
-    sorted.forEach((log, idx) => {
-      const rowNum = 9 + idx;
-      const row = worksheet.getRow(rowNum);
-      const isEven = idx % 2 === 0;
-      const bgHex = isEven ? 'FFFFFFFF' : 'FFF8FAFC';
-
-      const timestampStr = formatToIndianDateTime(log.timestamp);
-      const sourceStr = log.source || 'General';
-      const actionStr = log.action;
-      const oldValStr = formatPlainLogValue(log, false);
-      const newValStr = formatPlainLogValue(log, true);
-      const userStr = `@${log.userPerformed || 'sandbox_agent'}`;
-
-      const values = [timestampStr, sourceStr, actionStr, oldValStr, newValStr, userStr];
-
-      values.forEach((val, i) => {
-        const cell = row.getCell(i + 1);
-        cell.value = val;
-        cell.font = {
-          name: 'Segoe UI',
-          size: 10,
-          bold: i === 1 || i === 2 || i === 5,
-          color: { argb: i === 5 ? 'FFDC2626' : (i === 4 ? 'FF059669' : 'FF0F172A') }
-        };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgHex } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
-        cell.border = {
-          top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
-          left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
-          bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
-          right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
-        };
-      });
-    });
-
-    // Export as native .xlsx binary blob
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const blob = new Blob(["\uFEFF", excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = url;
-    link.download = `updates_export_${fileDateStr}.xlsx`;
+    link.setAttribute("href", url);
+    link.setAttribute("download", `updates_export_${fileDateStr}.xls`);
+    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
     await logExportAction('Excel', sorted.length);
   };
