@@ -524,40 +524,143 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
       doc.text(pageText, pageWidth - pageMargin - pageTextWidth, footerY);
     }
 
-    doc.save(`shield_sessions_export_${Date.now()}.pdf`);
+    const fileDateStr = formatToIndianDateTime(Date.now()).replace(/ /g, '_').replace(/:/g, '-');
+    doc.save(`sessions_export_${fileDateStr}.pdf`);
 
     await logExportAction('PDF', sorted.length);
   };
 
-  // CSV Export
+  // Excel Export (Styled Excel HTML Spreadsheet with Metadata Summary)
   const handleExportCSV = async () => {
-    const headers = ["Started At", "End Time", "Duration", "Browser", "OS", "Device", "Status"];
-    const rows = sorted.map(sess => [
-      formatToIndianDateTime(sess.startedAt),
-      sess.endedAt ? formatToIndianDateTime(sess.endedAt) : 'Ongoing',
-      formatDuration(sess.durationSeconds),
-      sess.browser,
-      sess.os,
-      sess.resolvedDeviceName || sess.device || 'Unknown',
-      sess.status
-    ]);
+    const fileDateStr = formatToIndianDateTime(Date.now()).replace(/ /g, '_').replace(/:/g, '-');
+    const exportTimestamp = formatToIndianDateTime(new Date().toISOString());
+    const filterText = filterStatus === 'all' ? 'All Session Statuses' : filterStatus.toUpperCase();
+    const searchText = searchQuery.trim() ? `Search: "${searchQuery.trim()}"` : 'All Sessions';
+    const userAgentId = user?.displayName ? `@${user.displayName}` : (user?.email ? `@${user.email.split('@')[0]}` : '@Mubbo_2706');
+    const agentName = user?.fullName || user?.displayName || 'Mubasshir Sunni';
 
-    const csvContent = [
-      headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','),
-      ...rows.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-    ].join('\n');
+    const escapeHtml = (str: any) => String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const rowsHtml = sorted.map((sess, idx) => {
+      const rowBg = idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC';
+      const startedStr = escapeHtml(formatToIndianDateTime(sess.startedAt));
+      const endedStr = escapeHtml(sess.endedAt ? formatToIndianDateTime(sess.endedAt) : 'Ongoing');
+      const durationStr = escapeHtml(formatDuration(sess.durationSeconds));
+      const browserStr = escapeHtml(sess.browser);
+      const osStr = escapeHtml(sess.os);
+      const deviceStr = escapeHtml(sess.resolvedDeviceName || sess.device || 'Unknown');
+      const statusStr = escapeHtml(sess.status);
+
+      const statusColor = sess.status?.toLowerCase() === 'active' ? '#059669' : '#64748B';
+
+      return `
+        <tr style="background-color: ${rowBg}; font-size: 11px;">
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; font-family: monospace; text-align: center; vertical-align: middle; white-space: nowrap;">${startedStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #64748B; font-family: monospace; text-align: center; vertical-align: middle; white-space: nowrap;">${endedStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: #0F172A; text-align: center; vertical-align: middle; white-space: nowrap;">${durationStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; text-align: center; vertical-align: middle; white-space: nowrap;">${browserStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; text-align: center; vertical-align: middle; white-space: nowrap;">${osStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #475569; text-align: center; vertical-align: middle; white-space: nowrap;">${deviceStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: ${statusColor}; text-align: center; vertical-align: middle; white-space: nowrap;">${statusStr}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const excelHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Sessions Codex</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F8FAFC; }
+          table { border-collapse: collapse; white-space: nowrap; }
+          td, th { text-align: center; vertical-align: middle; white-space: nowrap; mso-wrap-style: none; }
+          .title-header { background-color: #EC1D24; color: #FFFFFF; font-size: 16pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 12px; border: 1px solid #B91C1C; white-space: nowrap; }
+          .subtitle { background-color: #0F172A; color: #94A3B8; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px; font-weight: 600; white-space: nowrap; }
+          .summary-label { background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap; }
+          .summary-value { background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap; }
+          .th-header { background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap; }
+        </style>
+      </head>
+      <body>
+        <table style="width: 100%; border-collapse: collapse;">
+          <!-- Top Title Banner -->
+          <tr>
+            <td colspan="7" class="title-header">SECURITY SESSIONS REGISTRY CODEX</td>
+          </tr>
+          <tr>
+            <td colspan="7" class="subtitle">Sessions Audit Log | Nexus MCU Companion</td>
+          </tr>
+          <tr><td colspan="7" style="height: 10px;"></td></tr>
+
+          <!-- Summary Metadata Card -->
+          <tr>
+            <td class="summary-label">Report Exported Date:</td>
+            <td class="summary-value" colspan="2">${escapeHtml(exportTimestamp)}</td>
+            <td class="summary-label">User / Agent ID:</td>
+            <td class="summary-value" colspan="3"><b>${escapeHtml(userAgentId)}</b></td>
+          </tr>
+          <tr>
+            <td class="summary-label">Agent Name:</td>
+            <td class="summary-value" colspan="2"><b>${escapeHtml(agentName)}</b></td>
+            <td class="summary-label">Search Context:</td>
+            <td class="summary-value" colspan="3">${escapeHtml(searchText)}</td>
+          </tr>
+          <tr>
+            <td class="summary-label">Search Filter:</td>
+            <td class="summary-value" colspan="2">${escapeHtml(filterText)}</td>
+            <td class="summary-label">Total Audit Record:</td>
+            <td class="summary-value" colspan="3"><b>${sorted.length} Sessions</b></td>
+          </tr>
+
+          <tr><td colspan="7" style="height: 15px;"></td></tr>
+
+          <!-- Data Table Headers -->
+          <tr>
+            <th class="th-header">STARTED AT</th>
+            <th class="th-header">END TIME</th>
+            <th class="th-header">DURATION</th>
+            <th class="th-header">BROWSER</th>
+            <th class="th-header">OPERATING SYSTEM</th>
+            <th class="th-header">DEVICE</th>
+            <th class="th-header">STATUS</th>
+          </tr>
+
+          <!-- Data Rows -->
+          ${rowsHtml}
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(["\uFEFF", excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `shield_sessions_export_${Date.now()}.csv`);
+    link.setAttribute("download", `sessions_export_${fileDateStr}.xls`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    await logExportAction('CSV / Excel', sorted.length);
+    await logExportAction('Excel', sorted.length);
   };
 
   return (

@@ -187,6 +187,15 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
         val = val.replace(/\*\*|"/g, '');
       }
       val = val.trim();
+
+      // Clean up garbled stars or raw star symbols for crystal-clear rating display in Excel
+      val = val.replace(/â˜\.\.\.|â˜…/g, '★').replace(/â˜☆/g, '☆');
+      if (val.includes('★') || val.includes('☆')) {
+        const starCount = (val.match(/★/g) || []).length;
+        if (starCount > 0) {
+          val = val.replace(/★+[☆]*/g, `${starCount}/5 Stars (${'★'.repeat(starCount)}${'☆'.repeat(5 - starCount)})`);
+        }
+      }
     }
     return (val === undefined || val === null || val === "" || val === "N/A" || val === "Default") ? "N/A" : val;
   };
@@ -519,39 +528,142 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
       doc.text(pageText, pageWidth - pageMargin - pageTextWidth, footerY);
     }
 
-    doc.save(`shield_updates_export_${Date.now()}.pdf`);
+    const fileDateStr = formatToIndianDateTime(Date.now()).replace(/ /g, '_').replace(/:/g, '-');
+    doc.save(`updates_export_${fileDateStr}.pdf`);
 
     await logExportAction('PDF', sorted.length);
   };
 
-  // CSV Export
+  // Excel Export (Styled Excel HTML Spreadsheet with Metadata Summary)
   const handleExportCSV = async () => {
-    const headers = ["Timestamp", "Category", "Action", "Old Value", "New Value", "Action By"];
-    const rows = sorted.map(log => [
-      formatToIndianDateTime(log.timestamp),
-      log.source || 'General',
-      log.action,
-      formatPlainLogValue(log, false),
-      formatPlainLogValue(log, true),
-      `@${log.userPerformed || 'sandbox_agent'}`
-    ]);
+    const fileDateStr = formatToIndianDateTime(Date.now()).replace(/ /g, '_').replace(/:/g, '-');
+    const exportTimestamp = formatToIndianDateTime(new Date().toISOString());
+    const filterText = filterCategory === 'all' ? 'All Categories' : filterCategory.toUpperCase();
+    const searchText = searchQuery.trim() ? `Search: "${searchQuery.trim()}"` : 'All Logs';
+    const userAgentId = user?.displayName ? `@${user.displayName}` : (user?.email ? `@${user.email.split('@')[0]}` : '@Mubbo_2706');
+    const agentName = user?.fullName || user?.displayName || 'Mubasshir Sunni';
 
-    const csvContent = [
-      headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','),
-      ...rows.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-    ].join('\n');
+    const escapeHtml = (str: any) => String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const rowsHtml = sorted.map((log, idx) => {
+      const rowBg = idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC';
+      const timestampStr = escapeHtml(formatToIndianDateTime(log.timestamp));
+      const sourceStr = escapeHtml(log.source || 'General');
+      const actionStr = escapeHtml(log.action);
+      const oldValStr = escapeHtml(formatPlainLogValue(log, false));
+      const newValStr = escapeHtml(formatPlainLogValue(log, true));
+      const userStr = escapeHtml(`@${log.userPerformed || 'sandbox_agent'}`);
+
+      return `
+        <tr style="background-color: ${rowBg}; font-size: 11px;">
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; font-family: monospace; text-align: center; vertical-align: middle; white-space: nowrap;">${timestampStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: #475569; text-align: center; vertical-align: middle; white-space: nowrap;">${sourceStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: #0F172A; text-align: center; vertical-align: middle; white-space: nowrap;">${actionStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #64748B; text-align: center; vertical-align: middle; white-space: nowrap;">${oldValStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #059669; font-weight: 600; text-align: center; vertical-align: middle; white-space: nowrap;">${newValStr}</td>
+          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #DC2626; font-weight: bold; text-align: center; vertical-align: middle; white-space: nowrap;">${userStr}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const excelHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Updates Ledger</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F8FAFC; }
+          table { border-collapse: collapse; white-space: nowrap; }
+          td, th { text-align: center; vertical-align: middle; white-space: nowrap; mso-wrap-style: none; }
+          .title-header { background-color: #EC1D24; color: #FFFFFF; font-size: 16pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 12px; border: 1px solid #B91C1C; white-space: nowrap; }
+          .subtitle { background-color: #0F172A; color: #94A3B8; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px; font-weight: 600; white-space: nowrap; }
+          .summary-label { background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap; }
+          .summary-value { background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap; }
+          .th-header { background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap; }
+        </style>
+      </head>
+      <body>
+        <table style="width: 100%; border-collapse: collapse;">
+          <!-- Top Title Banner -->
+          <tr>
+            <td colspan="6" class="title-header">SECURITY UPDATES LEDGER REPORT</td>
+          </tr>
+          <tr>
+            <td colspan="6" class="subtitle">Security Audit Report | Nexus MCU Companion</td>
+          </tr>
+          <tr><td colspan="6" style="height: 10px;"></td></tr>
+
+          <!-- Summary Metadata Card -->
+          <tr>
+            <td class="summary-label">Report Exported Date:</td>
+            <td class="summary-value" colspan="2">${escapeHtml(exportTimestamp)}</td>
+            <td class="summary-label">User / Agent ID:</td>
+            <td class="summary-value" colspan="2"><b>${escapeHtml(userAgentId)}</b></td>
+          </tr>
+          <tr>
+            <td class="summary-label">Agent Name:</td>
+            <td class="summary-value" colspan="2"><b>${escapeHtml(agentName)}</b></td>
+            <td class="summary-label">Search Context:</td>
+            <td class="summary-value" colspan="2">${escapeHtml(searchText)}</td>
+          </tr>
+          <tr>
+            <td class="summary-label">Search Filter:</td>
+            <td class="summary-value" colspan="2">${escapeHtml(filterText)}</td>
+            <td class="summary-label">Total Audit Record:</td>
+            <td class="summary-value" colspan="2"><b>${sorted.length} Entries</b></td>
+          </tr>
+
+          <tr><td colspan="6" style="height: 15px;"></td></tr>
+
+          <!-- Data Table Headers -->
+          <tr>
+            <th class="th-header">TIMESTAMP</th>
+            <th class="th-header">CATEGORY</th>
+            <th class="th-header">ACTION / TITLE</th>
+            <th class="th-header">OLD VALUE</th>
+            <th class="th-header">NEW VALUE</th>
+            <th class="th-header">ACTION BY</th>
+          </tr>
+
+          <!-- Data Rows -->
+          ${rowsHtml}
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(["\uFEFF", excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `shield_updates_export_${Date.now()}.csv`);
+    link.setAttribute("download", `updates_export_${fileDateStr}.xls`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    await logExportAction('CSV / Excel', sorted.length);
+    await logExportAction('Excel', sorted.length);
   };
 
   // Theme helper for Custom Dropdown styles consistency
