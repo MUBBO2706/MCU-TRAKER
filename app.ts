@@ -1,8 +1,9 @@
 import express from "express";
 import path from "path";
-import * as telegramDb from "./backend/telegramDb.js";
-import * as telegramCharacterImages from "./backend/telegramCharacterImages.js";
+import * as telegramDb from "./backend/Database.js";
+import * as telegramCharacterImages from "./backend/CharacterImages.js";
 import { resolveDeviceName } from "./backend/deviceResolver.js";
+import { resolveIpAndLocation } from "./backend/ipResolver.js";
 import crypto from "crypto";
 import { MCU_TITLES } from "./src/data/mcuData.js";
 import dotenv from "dotenv";
@@ -200,11 +201,12 @@ app.get("/api/auth/status", (req, res) => {
       const userId = crypto.randomUUID();
       const sessionId = crypto.randomUUID();
 
-      // Parse user agent
+      // Parse user agent and ip location
       const uaInfo = telegramDb.parseUserAgent(req.headers["user-agent"]);
       const rawDevice = req.body.deviceModel || uaInfo.device;
       const resolvedDeviceName = await resolveDeviceName(rawDevice);
       const finalDevice = resolvedDeviceName || rawDevice;
+      const { ipAddress, location } = await resolveIpAndLocation(req);
 
       const initialSession: telegramDb.UserSession = {
         sessionId,
@@ -215,6 +217,8 @@ app.get("/api/auth/status", (req, res) => {
         os: uaInfo.os,
         device: finalDevice,
         resolvedDeviceName: finalDevice,
+        ipAddress,
+        location,
         status: "Active",
       };
 
@@ -406,6 +410,7 @@ app.get("/api/auth/status", (req, res) => {
       const rawDevice = req.body.deviceModel || uaInfo.device;
       const resolvedDeviceName = await resolveDeviceName(rawDevice);
       const finalDevice = resolvedDeviceName || rawDevice;
+      const { ipAddress, location } = await resolveIpAndLocation(req);
 
       const newSession: telegramDb.UserSession = {
         sessionId,
@@ -416,6 +421,8 @@ app.get("/api/auth/status", (req, res) => {
         os: uaInfo.os,
         device: finalDevice,
         resolvedDeviceName: finalDevice,
+        ipAddress,
+        location,
         status: "Active",
       };
 

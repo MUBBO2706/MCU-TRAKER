@@ -1,17 +1,17 @@
 import React from 'react';
 
 // @ts-ignore
-import spaceStoneImg from '../assets/images/space_stone_1783697042568.jpg';
+import spaceStoneImg from '../assets/images/space_stone.jpg';
 // @ts-ignore
-import mindStoneImg from '../assets/images/mind_stone_1783697057208.jpg';
+import mindStoneImg from '../assets/images/mind_stone.jpg';
 // @ts-ignore
-import realityStoneImg from '../assets/images/reality_stone_1783697070239.jpg';
+import realityStoneImg from '../assets/images/reality_stone.jpg';
 // @ts-ignore
-import powerStoneImg from '../assets/images/power_stone_1783697087546.jpg';
+import powerStoneImg from '../assets/images/power_stone.jpg';
 // @ts-ignore
-import timeStoneImg from '../assets/images/time_stone_1783697101576.jpg';
+import timeStoneImg from '../assets/images/time_stone.jpg';
 // @ts-ignore
-import soulStoneImg from '../assets/images/soul_stone_1783697113.jpg';
+import soulStoneImg from '../assets/images/soul_stone.jpg';
 
 const STONE_IMAGES: Record<string, string> = {
   space: spaceStoneImg,

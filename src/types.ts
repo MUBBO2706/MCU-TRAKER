@@ -142,3 +142,17 @@ export interface UpdateLog {
   userPerformed: string;
   metadata?: any;
 }
+
+export interface UserSession {
+  sessionId: string;
+  startedAt: number;
+  endedAt: number | null;
+  durationSeconds: number | null;
+  browser: string;
+  os: string;
+  device?: string;
+  resolvedDeviceName?: string;
+  ipAddress?: string;
+  location?: string;
+  status: 'Active' | 'Terminated' | 'Logged Out';
+}

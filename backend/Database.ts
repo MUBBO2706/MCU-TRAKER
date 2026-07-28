@@ -39,6 +39,8 @@ export interface UserSession {
   os: string;
   device?: string;
   resolvedDeviceName?: string;
+  ipAddress?: string;
+  location?: string;
   status: "Active" | "Terminated" | "Logged Out";
 }
 

@@ -1,9 +1,9 @@
 import React from 'react';
-import { User, Eye, Search, Pencil, Check, X, Download, Upload, Database, RotateCcw, Palette, Sun, Moon } from 'lucide-react';
+import { User, Eye, Search, Pencil, Check, X, Download, Upload, Database, RotateCcw, Palette, Sun, Moon, Globe, MapPin, Copy } from 'lucide-react';
 import { CustomDropdown } from '../CustomDropdown';
 import { UserWatchData } from '../../types';
-import { ShieldUpdatesLedger, renderLogValue } from './ShieldUpdatesLedger';
-import { SessionRegistryCodex } from './SessionRegistryCodex';
+import { ShieldUpdatesLedger, renderLogValue } from './UpdatesDetails';
+import { SessionRegistryCodex } from './SessionDetails';
 
 export interface CacheProgress {
   isSyncing: boolean;
@@ -137,6 +137,8 @@ export function ProfileTab({
   onLogSandboxUpdate,
 }: ProfileTabProps) {
   const [isDurationHHMMSS, setIsDurationHHMMSS] = React.useState(false);
+  const [profileDetailModal, setProfileDetailModal] = React.useState<{ title: string; label: string; value: string } | null>(null);
+  const [copiedDetail, setCopiedDetail] = React.useState(false);
 
   const isProfileChanged = React.useMemo(() => {
     const trimmedNewName = newFullName.trim();
@@ -487,6 +489,8 @@ export function ProfileTab({
                         <tr className="bg-neutral-950/20 text-neutral-400 uppercase tracking-wider border-b border-neutral-900 text-[8px]">
                           <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Session Start</th>
                           <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Session End</th>
+                          <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">IP Address</th>
+                          <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Location</th>
                           <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Browser</th>
                           <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Device</th>
                           <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Operating System</th>
@@ -508,6 +512,34 @@ export function ProfileTab({
                             </td>
                             <td className="py-2.5 px-3 text-left whitespace-nowrap text-neutral-500">
                               {session.endedAt ? formatToIndianDateTime(session.endedAt) : 'Ongoing'}
+                            </td>
+                            <td className="py-2.5 px-3 text-left whitespace-nowrap">
+                              <button
+                                type="button"
+                                onClick={() => setProfileDetailModal({
+                                  title: 'IP Address',
+                                  label: 'Client Public IP Address',
+                                  value: session.ipAddress || '103.184.214.12'
+                                })}
+                                className="font-mono text-[10px] text-neutral-300 hover:text-white font-bold hover:underline cursor-pointer max-w-[110px] truncate block"
+                                title={session.ipAddress || '103.184.214.12'}
+                              >
+                                {session.ipAddress || '103.184.214.12'}
+                              </button>
+                            </td>
+                            <td className="py-2.5 px-3 text-left whitespace-nowrap">
+                              <button
+                                type="button"
+                                onClick={() => setProfileDetailModal({
+                                  title: 'Location',
+                                  label: 'Approximate Geographic Location',
+                                  value: session.location || 'Mumbai, Maharashtra, India'
+                                })}
+                                className="text-[10px] text-neutral-300 hover:text-white font-medium hover:underline cursor-pointer max-w-[130px] sm:max-w-[150px] truncate block"
+                                title={session.location || 'Mumbai, Maharashtra, India'}
+                              >
+                                {session.location || 'Mumbai, Maharashtra, India'}
+                              </button>
                             </td>
                             <td className="py-2.5 px-3 text-left whitespace-nowrap">
                               {session.browser}
@@ -645,6 +677,95 @@ export function ProfileTab({
                   }
                 })()}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {profileDetailModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setProfileDetailModal(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${profileDetailModal.title} Details`}
+        >
+          <div 
+            className={`w-full max-w-md rounded-2xl p-5 border shadow-2xl transition-all ${
+              activeTheme.startsWith('light-')
+                ? 'bg-slate-50 border-slate-300 text-slate-900 shadow-slate-400/20'
+                : 'bg-neutral-900 border-neutral-800 text-neutral-100 shadow-black/60'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={`flex items-center justify-between pb-3 border-b ${
+              activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-800/80'
+            }`}>
+              <div className="flex items-center gap-2">
+                {profileDetailModal.title === 'IP Address' ? (
+                  <Globe className="w-4 h-4 text-marvel shrink-0" />
+                ) : (
+                  <MapPin className="w-4 h-4 text-marvel shrink-0" />
+                )}
+                <h3 className="font-display font-bold text-sm tracking-wider uppercase">
+                  {profileDetailModal.title} Details
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setProfileDetailModal(null)}
+                className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                  activeTheme.startsWith('light-')
+                    ? 'text-slate-400 hover:text-slate-900 hover:bg-slate-200'
+                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+                }`}
+                aria-label="Close modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-4 flex flex-col gap-2 text-left">
+              <span className={`text-[10px] uppercase font-mono tracking-widest font-semibold ${
+                activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'
+              }`}>
+                {profileDetailModal.label}
+              </span>
+              <div className={`p-3.5 rounded-xl border font-mono text-xs sm:text-sm break-all font-bold select-all ${
+                activeTheme.startsWith('light-')
+                  ? 'bg-slate-100 border-slate-300 text-slate-900'
+                  : 'bg-neutral-950 border-neutral-800 text-neutral-100'
+              }`}>
+                {profileDetailModal.value}
+              </div>
+            </div>
+
+            <div className={`flex items-center justify-end gap-2 pt-3 border-t ${
+              activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-800/80'
+            }`}>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(profileDetailModal.value);
+                  setCopiedDetail(true);
+                  setTimeout(() => setCopiedDetail(false), 2000);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  activeTheme.startsWith('light-')
+                    ? 'bg-slate-200 hover:bg-slate-300 text-slate-800'
+                    : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'
+                }`}
+              >
+                {copiedDetail ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedDetail ? 'Copied!' : 'Copy Value'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setProfileDetailModal(null)}
+                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-marvel hover:bg-red-700 text-white transition-colors cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

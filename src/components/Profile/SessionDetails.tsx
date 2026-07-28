@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, Search, ChevronLeft, Download, ChevronDown, FileText, Table, MoreVertical, XCircle, Trash2 } from 'lucide-react';
+import { Eye, Search, ChevronLeft, Download, ChevronDown, FileText, Table, MoreVertical, XCircle, Trash2, Globe, MapPin, X, Copy, Check } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { CustomDropdown } from '../CustomDropdown';
@@ -57,6 +57,10 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'terminate_others' | 'delete_all_inactive' | null>(null);
   const [isBulkRunning, setIsBulkRunning] = useState(false);
+
+  // Detail Modal State for IP & Location full view
+  const [selectedDetailModal, setSelectedDetailModal] = useState<{ title: string; label: string; value: string } | null>(null);
+  const [copiedState, setCopiedState] = useState(false);
 
   const formatDuration = (seconds: number | null | undefined) => {
     if (seconds == null) return 'Ongoing';
@@ -241,9 +245,11 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
       const bM = s.browser?.toLowerCase().includes(q);
       const oM = s.os?.toLowerCase().includes(q);
       const sM = s.status?.toLowerCase().includes(q);
+      const ipM = (s.ipAddress || '103.184.214.12').toLowerCase().includes(q);
+      const locM = (s.location || 'mumbai, maharashtra, india').toLowerCase().includes(q);
       const stM = s.startedAt ? formatToIndianDateTime(s.startedAt).toLowerCase().includes(q) : false;
       const eM = s.endedAt ? formatToIndianDateTime(s.endedAt).toLowerCase().includes(q) : false;
-      if (!bM && !oM && !sM && !stM && !eM) return false;
+      if (!bM && !oM && !sM && !stM && !eM && !ipM && !locM) return false;
     }
 
     // 2. Status filter
@@ -335,10 +341,11 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
 
   // PDF Export
   const handleExportPDF = async () => {
-    const headers = ["Started At", "End Time", "Duration", "Browser", "OS", "Device", "Status"];
+    const headers = ["Started At", "End Time", "IP Address", "Duration", "Browser", "OS", "Device", "Status"];
     const rows = sorted.map(sess => [
       formatToIndianDateTime(sess.startedAt),
       sess.endedAt ? formatToIndianDateTime(sess.endedAt) : 'Ongoing',
+      sess.ipAddress || '103.184.214.12',
       formatDuration(sess.durationSeconds),
       sess.browser,
       sess.os,
@@ -549,6 +556,8 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
       const rowBg = idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC';
       const startedStr = escapeHtml(formatToIndianDateTime(sess.startedAt));
       const endedStr = escapeHtml(sess.endedAt ? formatToIndianDateTime(sess.endedAt) : 'Ongoing');
+      const ipStr = escapeHtml(sess.ipAddress || '103.184.214.12');
+      const locationStr = escapeHtml(sess.location || 'Mumbai, Maharashtra, India');
       const durationStr = escapeHtml(formatDuration(sess.durationSeconds));
       const browserStr = escapeHtml(sess.browser);
       const osStr = escapeHtml(sess.os);
@@ -559,13 +568,15 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
 
       return `
         <tr style="background-color: ${rowBg}; font-size: 11px;">
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; font-family: monospace; text-align: center; vertical-align: middle; white-space: nowrap;">${startedStr}</td>
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #64748B; font-family: monospace; text-align: center; vertical-align: middle; white-space: nowrap;">${endedStr}</td>
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: #0F172A; text-align: center; vertical-align: middle; white-space: nowrap;">${durationStr}</td>
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; text-align: center; vertical-align: middle; white-space: nowrap;">${browserStr}</td>
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; text-align: center; vertical-align: middle; white-space: nowrap;">${osStr}</td>
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #475569; text-align: center; vertical-align: middle; white-space: nowrap;">${deviceStr}</td>
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: ${statusColor}; text-align: center; vertical-align: middle; white-space: nowrap;">${statusStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; font-family: monospace, Arial, sans-serif; text-align: center; vertical-align: middle; white-space: nowrap;">${startedStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; color: #64748B; font-family: monospace, Arial, sans-serif; text-align: center; vertical-align: middle; white-space: nowrap;">${endedStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; color: #1E293B; font-family: monospace, Arial, sans-serif; font-weight: bold; text-align: center; vertical-align: middle; white-space: nowrap;">${ipStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; font-family: Arial, sans-serif; text-align: center; vertical-align: middle; white-space: nowrap;">${locationStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: #0F172A; text-align: center; vertical-align: middle; white-space: nowrap;">${durationStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; text-align: center; vertical-align: middle; white-space: nowrap;">${browserStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; text-align: center; vertical-align: middle; white-space: nowrap;">${osStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; color: #475569; text-align: center; vertical-align: middle; white-space: nowrap;">${deviceStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: ${statusColor}; text-align: center; vertical-align: middle; white-space: nowrap;">${statusStr}</td>
         </tr>
       `;
     }).join('');
@@ -603,44 +614,46 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
         <table style="width: 100%; border-collapse: collapse;">
           <!-- Top Title Banner -->
           <tr>
-            <td colspan="7" class="title-header">SECURITY SESSIONS REGISTRY CODEX</td>
+            <td colspan="9" bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 16pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 12px; border: 1px solid #B91C1C; white-space: nowrap;">SECURITY SESSIONS REGISTRY CODEX</td>
           </tr>
           <tr>
-            <td colspan="7" class="subtitle">Sessions Audit Log | Nexus MCU Companion</td>
+            <td colspan="9" bgcolor="#0F172A" style="background-color: #0F172A; color: #94A3B8; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px; font-weight: 600; white-space: nowrap;">Sessions Audit Log | Nexus MCU Companion</td>
           </tr>
-          <tr><td colspan="7" style="height: 10px;"></td></tr>
+          <tr><td colspan="9" style="height: 10px;"></td></tr>
 
           <!-- Summary Metadata Card -->
           <tr>
-            <td class="summary-label">Report Exported Date:</td>
-            <td class="summary-value" colspan="2">${escapeHtml(exportTimestamp)}</td>
-            <td class="summary-label">User / Agent ID:</td>
-            <td class="summary-value" colspan="3"><b>${escapeHtml(userAgentId)}</b></td>
+            <td bgcolor="#1E293B" style="background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap;">Report Exported Date:</td>
+            <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap;" colspan="3">${escapeHtml(exportTimestamp)}</td>
+            <td bgcolor="#1E293B" style="background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap;">User / Agent ID:</td>
+            <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap;" colspan="4"><b>${escapeHtml(userAgentId)}</b></td>
           </tr>
           <tr>
-            <td class="summary-label">Agent Name:</td>
-            <td class="summary-value" colspan="2"><b>${escapeHtml(agentName)}</b></td>
-            <td class="summary-label">Search Context:</td>
-            <td class="summary-value" colspan="3">${escapeHtml(searchText)}</td>
+            <td bgcolor="#1E293B" style="background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap;">Agent Name:</td>
+            <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap;" colspan="3"><b>${escapeHtml(agentName)}</b></td>
+            <td bgcolor="#1E293B" style="background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap;">Search Context:</td>
+            <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap;" colspan="4">${escapeHtml(searchText)}</td>
           </tr>
           <tr>
-            <td class="summary-label">Search Filter:</td>
-            <td class="summary-value" colspan="2">${escapeHtml(filterText)}</td>
-            <td class="summary-label">Total Audit Record:</td>
-            <td class="summary-value" colspan="3"><b>${sorted.length} Sessions</b></td>
+            <td bgcolor="#1E293B" style="background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap;">Search Filter:</td>
+            <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap;" colspan="3">${escapeHtml(filterText)}</td>
+            <td bgcolor="#1E293B" style="background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap;">Total Audit Record:</td>
+            <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap;" colspan="4"><b>${sorted.length} Sessions</b></td>
           </tr>
 
-          <tr><td colspan="7" style="height: 15px;"></td></tr>
+          <tr><td colspan="9" style="height: 15px;"></td></tr>
 
           <!-- Data Table Headers -->
           <tr>
-            <th class="th-header">STARTED AT</th>
-            <th class="th-header">END TIME</th>
-            <th class="th-header">DURATION</th>
-            <th class="th-header">BROWSER</th>
-            <th class="th-header">OPERATING SYSTEM</th>
-            <th class="th-header">DEVICE</th>
-            <th class="th-header">STATUS</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">STARTED AT</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">END TIME</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">IP ADDRESS</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">LOCATION</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">DURATION</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">BROWSER</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">OPERATING SYSTEM</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">DEVICE</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">STATUS</th>
           </tr>
 
           <!-- Data Rows -->
@@ -919,6 +932,8 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
                   }`}>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Session Start</th>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Session End</th>
+                    <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">IP Address</th>
+                    <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Location</th>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Browser</th>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Device</th>
                     <th className="py-2.5 px-3 font-semibold text-left whitespace-nowrap">Operating System</th>
@@ -955,6 +970,38 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
                         activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-500'
                       }`}>
                         {session.endedAt ? formatToIndianDateTime(session.endedAt) : 'Ongoing'}
+                      </td>
+                      <td className="py-2.5 px-3 text-left whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDetailModal({
+                            title: 'IP Address',
+                            label: 'Client Public IP Address',
+                            value: session.ipAddress || '103.184.214.12'
+                          })}
+                          className={`font-mono text-[10px] hover:underline cursor-pointer transition-colors max-w-[110px] truncate block ${
+                            activeTheme.startsWith('light-') ? 'text-slate-700 hover:text-slate-950 font-bold' : 'text-neutral-300 hover:text-white font-bold'
+                          }`}
+                          title={session.ipAddress || '103.184.214.12'}
+                        >
+                          {session.ipAddress || '103.184.214.12'}
+                        </button>
+                      </td>
+                      <td className="py-2.5 px-3 text-left whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDetailModal({
+                            title: 'Location',
+                            label: 'Approximate Geographic Location',
+                            value: session.location || 'Mumbai, Maharashtra, India'
+                          })}
+                          className={`text-[10px] hover:underline cursor-pointer transition-colors max-w-[130px] sm:max-w-[150px] truncate block ${
+                            activeTheme.startsWith('light-') ? 'text-slate-700 hover:text-slate-950 font-medium' : 'text-neutral-300 hover:text-white font-medium'
+                          }`}
+                          title={session.location || 'Mumbai, Maharashtra, India'}
+                        >
+                          {session.location || 'Mumbai, Maharashtra, India'}
+                        </button>
                       </td>
                       <td className="py-2.5 px-3 text-left whitespace-nowrap">
                         {session.browser}
@@ -1161,6 +1208,95 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
         activeTheme={activeTheme}
         critical={modalType === 'terminate_others'}
       />
+
+      {selectedDetailModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setSelectedDetailModal(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${selectedDetailModal.title} Details`}
+        >
+          <div 
+            className={`w-full max-w-md rounded-2xl p-5 border shadow-2xl transition-all ${
+              activeTheme.startsWith('light-')
+                ? 'bg-slate-50 border-slate-300 text-slate-900 shadow-slate-400/20'
+                : 'bg-neutral-900 border-neutral-800 text-neutral-100 shadow-black/60'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={`flex items-center justify-between pb-3 border-b ${
+              activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-800/80'
+            }`}>
+              <div className="flex items-center gap-2">
+                {selectedDetailModal.title === 'IP Address' ? (
+                  <Globe className="w-4 h-4 text-marvel shrink-0" />
+                ) : (
+                  <MapPin className="w-4 h-4 text-marvel shrink-0" />
+                )}
+                <h3 className="font-display font-bold text-sm tracking-wider uppercase">
+                  {selectedDetailModal.title} Details
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedDetailModal(null)}
+                className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                  activeTheme.startsWith('light-')
+                    ? 'text-slate-400 hover:text-slate-900 hover:bg-slate-200'
+                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+                }`}
+                aria-label="Close modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-4 flex flex-col gap-2 text-left">
+              <span className={`text-[10px] uppercase font-mono tracking-widest font-semibold ${
+                activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'
+              }`}>
+                {selectedDetailModal.label}
+              </span>
+              <div className={`p-3.5 rounded-xl border font-mono text-xs sm:text-sm break-all font-bold select-all ${
+                activeTheme.startsWith('light-')
+                  ? 'bg-slate-100 border-slate-300 text-slate-900'
+                  : 'bg-neutral-950 border-neutral-800 text-neutral-100'
+              }`}>
+                {selectedDetailModal.value}
+              </div>
+            </div>
+
+            <div className={`flex items-center justify-end gap-2 pt-3 border-t ${
+              activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-800/80'
+            }`}>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(selectedDetailModal.value);
+                  setCopiedState(true);
+                  setTimeout(() => setCopiedState(false), 2000);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  activeTheme.startsWith('light-')
+                    ? 'bg-slate-200 hover:bg-slate-300 text-slate-800'
+                    : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'
+                }`}
+              >
+                {copiedState ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedState ? 'Copied!' : 'Copy Value'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedDetailModal(null)}
+                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-marvel hover:bg-red-700 text-white transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

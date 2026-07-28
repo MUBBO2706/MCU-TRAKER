@@ -560,12 +560,12 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
 
       return `
         <tr style="background-color: ${rowBg}; font-size: 11px;">
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; font-family: monospace; text-align: center; vertical-align: middle; white-space: nowrap;">${timestampStr}</td>
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: #475569; text-align: center; vertical-align: middle; white-space: nowrap;">${sourceStr}</td>
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: #0F172A; text-align: center; vertical-align: middle; white-space: nowrap;">${actionStr}</td>
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #64748B; text-align: center; vertical-align: middle; white-space: nowrap;">${oldValStr}</td>
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #059669; font-weight: 600; text-align: center; vertical-align: middle; white-space: nowrap;">${newValStr}</td>
-          <td style="padding: 8px 12px; border: 1px solid #E2E8F0; color: #DC2626; font-weight: bold; text-align: center; vertical-align: middle; white-space: nowrap;">${userStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; color: #334155; font-family: monospace, Arial, sans-serif; text-align: center; vertical-align: middle; white-space: nowrap;">${timestampStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: #475569; font-family: Arial, sans-serif; text-align: center; vertical-align: middle; white-space: nowrap;">${sourceStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; font-weight: bold; color: #0F172A; font-family: Arial, sans-serif; text-align: center; vertical-align: middle; white-space: nowrap;">${actionStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; color: #64748B; font-family: Arial, sans-serif; text-align: center; vertical-align: middle; white-space: nowrap;">${oldValStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; color: #059669; font-weight: 600; font-family: Arial, sans-serif; text-align: center; vertical-align: middle; white-space: nowrap;">${newValStr}</td>
+          <td bgcolor="${rowBg}" style="background-color: ${rowBg}; padding: 8px 12px; border: 1px solid #E2E8F0; color: #DC2626; font-weight: bold; font-family: Arial, sans-serif; text-align: center; vertical-align: middle; white-space: nowrap;">${userStr}</td>
         </tr>
       `;
     }).join('');
@@ -603,43 +603,43 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
         <table style="width: 100%; border-collapse: collapse;">
           <!-- Top Title Banner -->
           <tr>
-            <td colspan="6" class="title-header">SECURITY UPDATES LEDGER REPORT</td>
+            <td colspan="6" bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 16pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 12px; border: 1px solid #B91C1C; white-space: nowrap;">SECURITY UPDATES LEDGER REPORT</td>
           </tr>
           <tr>
-            <td colspan="6" class="subtitle">Security Audit Report | Nexus MCU Companion</td>
+            <td colspan="6" bgcolor="#0F172A" style="background-color: #0F172A; color: #94A3B8; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px; font-weight: 600; white-space: nowrap;">Security Audit Report | Nexus MCU Companion</td>
           </tr>
           <tr><td colspan="6" style="height: 10px;"></td></tr>
 
           <!-- Summary Metadata Card -->
           <tr>
-            <td class="summary-label">Report Exported Date:</td>
-            <td class="summary-value" colspan="2">${escapeHtml(exportTimestamp)}</td>
-            <td class="summary-label">User / Agent ID:</td>
-            <td class="summary-value" colspan="2"><b>${escapeHtml(userAgentId)}</b></td>
+            <td bgcolor="#1E293B" style="background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap;">Report Exported Date:</td>
+            <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap;" colspan="2">${escapeHtml(exportTimestamp)}</td>
+            <td bgcolor="#1E293B" style="background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap;">User / Agent ID:</td>
+            <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap;" colspan="2"><b>${escapeHtml(userAgentId)}</b></td>
           </tr>
           <tr>
-            <td class="summary-label">Agent Name:</td>
-            <td class="summary-value" colspan="2"><b>${escapeHtml(agentName)}</b></td>
-            <td class="summary-label">Search Context:</td>
-            <td class="summary-value" colspan="2">${escapeHtml(searchText)}</td>
+            <td bgcolor="#1E293B" style="background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap;">Agent Name:</td>
+            <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap;" colspan="2"><b>${escapeHtml(agentName)}</b></td>
+            <td bgcolor="#1E293B" style="background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap;">Search Context:</td>
+            <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap;" colspan="2">${escapeHtml(searchText)}</td>
           </tr>
           <tr>
-            <td class="summary-label">Search Filter:</td>
-            <td class="summary-value" colspan="2">${escapeHtml(filterText)}</td>
-            <td class="summary-label">Total Audit Record:</td>
-            <td class="summary-value" colspan="2"><b>${sorted.length} Entries</b></td>
+            <td bgcolor="#1E293B" style="background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap;">Search Filter:</td>
+            <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap;" colspan="2">${escapeHtml(filterText)}</td>
+            <td bgcolor="#1E293B" style="background-color: #1E293B; color: #F8FAFC; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #334155; white-space: nowrap;">Total Audit Record:</td>
+            <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; color: #0F172A; font-size: 10pt; text-align: center; vertical-align: middle; padding: 8px 12px; border: 1px solid #CBD5E1; white-space: nowrap;" colspan="2"><b>${sorted.length} Entries</b></td>
           </tr>
 
           <tr><td colspan="6" style="height: 15px;"></td></tr>
 
           <!-- Data Table Headers -->
           <tr>
-            <th class="th-header">TIMESTAMP</th>
-            <th class="th-header">CATEGORY</th>
-            <th class="th-header">ACTION / TITLE</th>
-            <th class="th-header">OLD VALUE</th>
-            <th class="th-header">NEW VALUE</th>
-            <th class="th-header">ACTION BY</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">TIMESTAMP</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">CATEGORY</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">ACTION / TITLE</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">OLD VALUE</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">NEW VALUE</th>
+            <th bgcolor="#EC1D24" style="background-color: #EC1D24; color: #FFFFFF; font-size: 10pt; font-weight: bold; text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #B91C1C; white-space: nowrap;">ACTION BY</th>
           </tr>
 
           <!-- Data Rows -->

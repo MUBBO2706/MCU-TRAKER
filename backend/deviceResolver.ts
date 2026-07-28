@@ -1,4 +1,4 @@
-import { getTelegramConfig, uploadTelegramFile, getTelegramFilePath, downloadTelegramFile, updateTelegramFile, getMasterIndexMetadata, updateMasterIndexMetadata } from './telegramDb.js';
+import { getTelegramConfig, uploadTelegramFile, getTelegramFilePath, downloadTelegramFile, updateTelegramFile, getMasterIndexMetadata, updateMasterIndexMetadata } from './Database.js';
 
 const CENTRAL_MAPPER_URL = 'https://ceaznet.vercel.app/api/device-mapper';
 const DEVICE_MAPPINGS_FILENAME = 'device_mappings.json';
