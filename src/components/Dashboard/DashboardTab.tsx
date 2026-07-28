@@ -3,7 +3,6 @@ import { MCU_TITLES, THEATRICAL_ORDER_IDS, CHRONOLOGICAL_ORDER_IDS } from '../..
 import { UserWatchData, McuTitle, ThemeType } from '../../types';
 import { ProgressRing } from '../ProgressRing';
 import { LazyImage } from '../LazyImage';
-import { ParallaxContainer } from '../Common/ParallaxContainer';
 import { Shield, Clock, AlertCircle, Zap, CheckCircle2, Eye, TrendingUp, BarChart3, LineChart as LineChartIcon } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -143,8 +142,7 @@ export function DashboardTab({
   return (
     <>
       {/* S.H.I.E.L.D. Multiverse Command & Countdown Hub */}
-      <ParallaxContainer intensity={0.65} className="w-full">
-        <div className="relative rounded-xl p-4 sm:p-5 overflow-hidden flex flex-col gap-3.5 md:gap-4 border border-red-950/40 bg-gradient-to-br from-neutral-950 via-red-950/20 to-neutral-950 md:min-h-[13rem]" id="dashboard-hero-countdown">
+      <div className="relative rounded-xl p-4 sm:p-5 overflow-hidden flex flex-col gap-3.5 md:gap-4 border border-red-950/40 bg-gradient-to-br from-neutral-950 via-red-950/20 to-neutral-950 md:min-h-[13rem]" id="dashboard-hero-countdown">
         {/* Cover backdrop elements */}
         <div className="absolute inset-0 opacity-15 bg-gradient-to-r from-red-600/10 via-transparent to-transparent pointer-events-none" />
         <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-br from-red-500/10 to-transparent blur-3xl rounded-full pointer-events-none" />
@@ -226,7 +224,6 @@ export function DashboardTab({
           </div>
         </div>
       </div>
-    </ParallaxContainer>
 
       {/* Stats Cards & Data Visualization Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch" id="dashboard-stats-section">

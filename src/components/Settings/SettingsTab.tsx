@@ -59,10 +59,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [isCharging, setIsCharging] = useState<boolean | null>(null);
   
-  // States for Device Orientation API (Gyroscope)
-  const [gyroSupported, setGyroSupported] = useState(false);
-  const [gyroPermissionStatus, setGyroPermissionStatus] = useState<string>('unknown');
-  
   // States for Haptics (Vibration API)
   const [hapticsSupported, setHapticsSupported] = useState(false);
 
@@ -73,15 +69,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       return (saved as any) || 'auto';
     } catch {
       return 'auto';
-    }
-  });
-
-  const [gyroParallax, setGyroParallax] = useState<'off' | 'on'>(() => {
-    try {
-      const saved = localStorage.getItem('mcu_pwa_parallax');
-      return (saved as any) || 'on';
-    } catch {
-      return 'on';
     }
   });
 
@@ -135,12 +122,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       }).catch((e: any) => {
         console.warn('Battery status API query rejected:', e);
       });
-    }
-
-    // 3. Gyroscope Sensor Capability Detection
-    if (typeof window !== 'undefined') {
-      const hasGyro = 'DeviceOrientationEvent' in window;
-      setGyroSupported(hasGyro);
     }
 
     // 4. Haptic Feedback Motor Detection
@@ -250,17 +231,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
       {/* PWA Customization Section */}
       {(isPwa || developerMode) && (
-        <div className="flex flex-col gap-5 pt-5 border-t border-neutral-900/40" id="settings-pwa-customization">
+        <div className="flex flex-col gap-4 pt-5 border-t border-neutral-900/40" id="settings-pwa-customization">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex flex-col gap-1 max-w-[70%]">
-              <span className={`text-xs uppercase font-bold tracking-wider font-display flex items-center gap-1.5 ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-400'}`}>
-                <Smartphone className="w-4 h-4 text-marvel" />
-                PWA Native Customization {developerMode && !isPwa && <span className="text-[9px] lowercase font-normal italic px-2 py-0.5 bg-marvel/10 text-marvel rounded-full ml-2">Simulated</span>}
-              </span>
-              <p className={`text-[10px] leading-relaxed text-left ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
-                Optimize physical device resources, activate motion haptics, and coordinate tactile hardware integration.
-              </p>
-            </div>
+            <span className={`text-xs uppercase font-bold tracking-wider font-display ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-400'}`}>
+              PWA Customization {developerMode && !isPwa && <span className="text-[9px] lowercase font-normal italic px-2 py-0.5 bg-marvel/10 text-marvel rounded-full ml-2">Simulated</span>}
+            </span>
             {/* Display Mode Indicator Badge */}
             <div className={`font-mono text-[9px] font-bold border rounded-full px-2.5 py-1 uppercase tracking-wider ${
               isPwa 
@@ -270,13 +245,15 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               Mode: {displayMode.replace('-', ' ')}
             </div>
           </div>
+          <p className={`text-[10px] leading-relaxed -mt-2 text-left ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
+            Optimize physical device resources, activate motion haptics, and coordinate tactile hardware integration.
+          </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mt-2">
             {/* 1. Battery-Aware Performance Governor */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between border-b pb-1.5 border-neutral-900/20">
-                <span className={`text-[11px] font-semibold flex items-center gap-1 ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
-                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between border-b pb-1.5 border-neutral-900/10">
+                <span className={`text-[11px] font-bold uppercase tracking-wider ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-400'}`}>
                   Performance Governor
                 </span>
                 {batterySupported ? (
@@ -293,11 +270,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 Throttles heavy particle effects, limits rendering cycles, and defers automatic background pre-caching when device battery is under 20% and discharging.
               </p>
               
-              <div className="flex flex-col gap-1.5 mt-1">
+              <div className="grid grid-cols-3 gap-2.5 w-full mt-1">
                 {[
-                  { id: 'high', name: 'High Performance', desc: 'Max visuals & asset pre-caching' },
-                  { id: 'saver', name: 'Battery Saver', desc: 'Disable particles & pause background sync' },
-                  { id: 'auto', name: 'Battery-Aware (Auto)', desc: 'Governor coordinates automatically' }
+                  { id: 'high', name: 'High', desc: 'Max visuals & asset pre-caching' },
+                  { id: 'saver', name: 'Saver', desc: 'Disable particles & pause background sync' },
+                  { id: 'auto', name: 'Auto', desc: 'Battery-Aware (Auto)' }
                 ].map((gov) => (
                   <button
                     key={gov.id}
@@ -308,7 +285,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       updatePreference('performanceGovernor', gov.id);
                       showFeedback(`Governor set to ${gov.name}`, 'success');
                     }}
-                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-center gap-0.5 transition-all cursor-pointer h-[52px] ${
+                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-start gap-1 transition-all cursor-pointer h-[64px] min-w-0 ${
                       performanceGovernor === gov.id
                         ? 'border-marvel bg-marvel/5 shadow-sm shadow-marvel/5 font-bold'
                         : activeTheme.startsWith('light-')
@@ -316,10 +293,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
                     }`}
                   >
-                    <span className={`text-[10px] font-semibold leading-none ${performanceGovernor === gov.id ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
+                    <span className={`text-[11px] font-semibold leading-none ${performanceGovernor === gov.id ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
                       {gov.name}
                     </span>
-                    <span className={`text-[8px] font-medium leading-tight truncate ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
+                    <span className={`text-[8px] font-medium leading-normal line-clamp-2 ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
                       {gov.desc}
                     </span>
                   </button>
@@ -327,76 +304,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               </div>
             </div>
 
-            {/* 2. Gyroscope Parallax Feedback */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between border-b pb-1.5 border-neutral-900/20">
-                <span className={`text-[11px] font-semibold flex items-center gap-1 ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                  Parallax Feedback
-                </span>
-                {gyroSupported ? (
-                  <span className={`font-mono text-[9px] text-emerald-500 font-bold`}>
-                    ACTIVE
-                  </span>
-                ) : (
-                  <span className={`font-mono text-[9px] ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-600'}`}>
-                    Unsupported
-                  </span>
-                )}
-              </div>
-              <p className={`text-[10px] leading-relaxed text-left ${activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'}`}>
-                Engages responsive 3D depth-tilt feedback on main visual assets based on gyroscope sensors, with automated elegant fallback to mouse movement on desktops.
-              </p>
-              
-              <div className="flex flex-col gap-1.5 mt-1">
-                {[
-                  { id: 'on', name: 'Interactive Depth On', desc: 'Sensing active orientation & mouse' },
-                  { id: 'off', name: 'Disable Motion', desc: 'Flat static layouts only' }
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={async () => {
-                      if (opt.id === 'on' && typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-                        try {
-                          const status = await (DeviceOrientationEvent as any).requestPermission();
-                          setGyroPermissionStatus(status);
-                          if (status === 'granted') {
-                            setGyroSupported(true);
-                          }
-                        } catch (e) {
-                          console.warn('Gyro sensor permission rejected', e);
-                        }
-                      }
-                      setGyroParallax(opt.id as any);
-                      localStorage.setItem('mcu_pwa_parallax', opt.id);
-                      updatePreference('gyroParallax', opt.id);
-                      showFeedback(`Parallax set to ${opt.name}`, 'success');
-                    }}
-                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-center gap-0.5 transition-all cursor-pointer h-[52px] ${
-                      gyroParallax === opt.id
-                        ? 'border-marvel bg-marvel/5 shadow-sm shadow-marvel/5 font-bold'
-                        : activeTheme.startsWith('light-')
-                        ? 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
-                        : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
-                    }`}
-                  >
-                    <span className={`text-[10px] font-semibold leading-none ${gyroParallax === opt.id ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
-                      {opt.name}
-                    </span>
-                    <span className={`text-[8px] font-medium leading-tight truncate ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
-                      {opt.desc}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 3. Tactile Haptic Feedback */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between border-b pb-1.5 border-neutral-900/20">
-                <span className={`text-[11px] font-semibold flex items-center gap-1 ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
-                  <Cpu className="w-3.5 h-3.5 text-emerald-500" />
+            {/* 2. Tactile Haptic Feedback */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between border-b pb-1.5 border-neutral-900/10">
+                <span className={`text-[11px] font-bold uppercase tracking-wider ${activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-neutral-400'}`}>
                   Tactile Haptics
                 </span>
                 {hapticsSupported ? (
@@ -413,7 +324,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 Triggers mechanical touch feedback during interactive event cycles: tab switching, watch lists modifications, and developer easter eggs.
               </p>
               
-              <div className="flex flex-col gap-1.5 mt-1">
+              <div className="grid grid-cols-2 gap-2.5 w-full mt-1">
                 {[
                   { id: 'on', name: 'Haptic Feedback On', desc: 'Vibrate on user interaction' },
                   { id: 'off', name: 'Disable Tactile', desc: 'Purely visual feedback' }
@@ -431,7 +342,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       }
                       showFeedback(`Tactile haptics ${enabled ? 'enabled' : 'disabled'}`, 'success');
                     }}
-                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-center gap-0.5 transition-all cursor-pointer h-[52px] ${
+                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-start gap-1 transition-all cursor-pointer h-[64px] min-w-0 ${
                       ((hapticFeedback && opt.id === 'on') || (!hapticFeedback && opt.id === 'off'))
                         ? 'border-marvel bg-marvel/5 shadow-sm shadow-marvel/5 font-bold'
                         : activeTheme.startsWith('light-')
@@ -439,10 +350,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
                     }`}
                   >
-                    <span className={`text-[10px] font-semibold leading-none ${((hapticFeedback && opt.id === 'on') || (!hapticFeedback && opt.id === 'off')) ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
+                    <span className={`text-[11px] font-semibold leading-none ${((hapticFeedback && opt.id === 'on') || (!hapticFeedback && opt.id === 'off')) ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
                       {opt.name}
                     </span>
-                    <span className={`text-[8px] font-medium leading-tight truncate ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
+                    <span className={`text-[8px] font-medium leading-normal line-clamp-2 ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
                       {opt.desc}
                     </span>
                   </button>
