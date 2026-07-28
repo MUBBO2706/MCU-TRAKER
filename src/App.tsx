@@ -1922,6 +1922,7 @@ export default function App() {
                 <button
                   key={item.tab}
                   onClick={() => {
+                    triggerHapticFeedback(10);
                     setSelectedMovieId(null);
                     setShowAllSessions(false);
                     setActiveTab(item.tab as any);
@@ -2331,6 +2332,7 @@ export default function App() {
             <button
               key={item.tab}
               onClick={() => {
+                triggerHapticFeedback(10);
                 setSelectedMovieId(null);
                 setShowAllSessions(false);
                 setActiveTab(item.tab as any);

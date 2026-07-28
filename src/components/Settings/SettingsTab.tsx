@@ -270,10 +270,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 Throttles heavy particle effects, limits rendering cycles, and defers automatic background pre-caching when device battery is under 20% and discharging.
               </p>
               
-              <div className="grid grid-cols-3 gap-2.5 w-full mt-1">
+              <div className="grid grid-cols-2 gap-3 w-full mt-1">
                 {[
-                  { id: 'high', name: 'High', desc: 'Max visuals & asset pre-caching' },
-                  { id: 'saver', name: 'Saver', desc: 'Disable particles & pause background sync' },
+                  { id: 'high', name: 'High Performance', desc: 'Max visuals & asset pre-caching' },
                   { id: 'auto', name: 'Auto', desc: 'Battery-Aware (Auto)' }
                 ].map((gov) => (
                   <button
@@ -285,18 +284,18 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       updatePreference('performanceGovernor', gov.id);
                       showFeedback(`Governor set to ${gov.name}`, 'success');
                     }}
-                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-start gap-1 transition-all cursor-pointer h-[64px] min-w-0 ${
+                    className={`p-3 rounded-xl border text-left flex flex-col justify-center gap-0.5 transition-all focus:outline-none min-w-0 w-full cursor-pointer h-[58px] ${
                       performanceGovernor === gov.id
-                        ? 'border-marvel bg-marvel/5 shadow-sm shadow-marvel/5 font-bold'
+                        ? 'border-marvel bg-marvel/5 shadow-md shadow-marvel/5 font-bold'
                         : activeTheme.startsWith('light-')
                         ? 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
                         : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
                     }`}
                   >
-                    <span className={`text-[11px] font-semibold leading-none ${performanceGovernor === gov.id ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
+                    <span className={`text-[11px] font-semibold leading-tight ${performanceGovernor === gov.id ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
                       {gov.name}
                     </span>
-                    <span className={`text-[8px] font-medium leading-normal line-clamp-2 ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
+                    <span className={`text-[9px] font-medium ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
                       {gov.desc}
                     </span>
                   </button>
@@ -324,7 +323,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 Triggers mechanical touch feedback during interactive event cycles: tab switching, watch lists modifications, and developer easter eggs.
               </p>
               
-              <div className="grid grid-cols-2 gap-2.5 w-full mt-1">
+              <div className="grid grid-cols-2 gap-3 w-full mt-1">
                 {[
                   { id: 'on', name: 'Haptic Feedback On', desc: 'Vibrate on user interaction' },
                   { id: 'off', name: 'Disable Tactile', desc: 'Purely visual feedback' }
@@ -342,18 +341,18 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       }
                       showFeedback(`Tactile haptics ${enabled ? 'enabled' : 'disabled'}`, 'success');
                     }}
-                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-start gap-1 transition-all cursor-pointer h-[64px] min-w-0 ${
+                    className={`p-3 rounded-xl border text-left flex flex-col justify-center gap-0.5 transition-all focus:outline-none min-w-0 w-full cursor-pointer h-[58px] ${
                       ((hapticFeedback && opt.id === 'on') || (!hapticFeedback && opt.id === 'off'))
-                        ? 'border-marvel bg-marvel/5 shadow-sm shadow-marvel/5 font-bold'
+                        ? 'border-marvel bg-marvel/5 shadow-md shadow-marvel/5 font-bold'
                         : activeTheme.startsWith('light-')
                         ? 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
                         : 'border-neutral-800 bg-neutral-950 hover:border-neutral-700'
                     }`}
                   >
-                    <span className={`text-[11px] font-semibold leading-none ${((hapticFeedback && opt.id === 'on') || (!hapticFeedback && opt.id === 'off')) ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
+                    <span className={`text-[11px] font-semibold leading-tight ${((hapticFeedback && opt.id === 'on') || (!hapticFeedback && opt.id === 'off')) ? 'text-marvel' : activeTheme.startsWith('light-') ? 'text-slate-800' : 'text-white'}`}>
                       {opt.name}
                     </span>
-                    <span className={`text-[8px] font-medium leading-normal line-clamp-2 ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
+                    <span className={`text-[9px] font-medium ${activeTheme.startsWith('light-') ? 'text-slate-400' : 'text-neutral-500'}`}>
                       {opt.desc}
                     </span>
                   </button>

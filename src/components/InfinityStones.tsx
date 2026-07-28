@@ -3,26 +3,12 @@ import { INFINITY_STONES, MCU_TITLES } from '../data/mcuData';
 import { InfinityStone } from '../types';
 import { Sparkles, MapPin, Eye, Compass, Info } from 'lucide-react';
 import { CrystalStoneRenderer } from './CrystalStoneRenderer';
+import { triggerHapticFeedback } from '../utils/device';
 
 
 
 const getStoneProportions = (id: string): { width: string; height: string } => {
-  switch (id) {
-    case 'space':
-      return { width: '3.25rem', height: '3.25rem' }; // 52px by 52px (Cube)
-    case 'mind':
-      return { width: '2.5rem', height: '3.75rem' }; // 40px by 60px (Elongated Kite)
-    case 'reality':
-      return { width: '2.25rem', height: '3.75rem' }; // 36px by 60px (Slender Shard)
-    case 'power':
-      return { width: '2.75rem', height: '3.75rem' }; // 44px by 60px (Oblong Octagon)
-    case 'time':
-      return { width: '3.5rem', height: '3.5rem' }; // 56px by 56px (Eye)
-    case 'soul':
-      return { width: '3rem', height: '3.25rem' }; // 48px by 52px (Pear)
-    default:
-      return { width: '3rem', height: '3rem' };
-  }
+  return { width: '3.75rem', height: '3.75rem' };
 };
 
 interface InfinityStonesProps {
@@ -34,6 +20,7 @@ export const InfinityStones: React.FC<InfinityStonesProps> = ({ onSelectMovie })
 
   const handleStoneClick = (stone: InfinityStone) => {
     setActiveStone(activeStone?.id === stone.id ? null : stone);
+    triggerHapticFeedback(12);
   };
 
   return (
@@ -49,7 +36,7 @@ export const InfinityStones: React.FC<InfinityStonesProps> = ({ onSelectMovie })
       </div>
 
       {/* Grid of Stones */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 px-1">
         {INFINITY_STONES.map((stone) => {
           const isActive = activeStone?.id === stone.id;
           return (
@@ -63,14 +50,25 @@ export const InfinityStones: React.FC<InfinityStonesProps> = ({ onSelectMovie })
               }`}
             >
               {/* Glowing Gem with custom high-quality image */}
-              <div className="h-20 flex items-center justify-center mb-1 w-full">
+              <div className="h-20 flex items-center justify-center mb-1 w-full relative">
+                {/* Volumetric round back-glow accent behind active stone */}
+                {isActive && (
+                  <div
+                    className="absolute w-12 h-12 rounded-full blur-xl opacity-40 transition-all duration-500 animate-pulse pointer-events-none"
+                    style={{
+                      backgroundColor: stone.glowColor,
+                      boxShadow: `0 0 35px 12px ${stone.glowColor}`,
+                    }}
+                  />
+                )}
+
                 <div
-                  className="transition-all duration-500 flex items-center justify-center relative"
+                  className="transition-all duration-500 flex items-center justify-center relative z-10"
                   style={{
                     ...getStoneProportions(stone.id),
                     filter: isActive 
-                      ? `drop-shadow(0 0 20px ${stone.glowColor}) drop-shadow(0 0 8px ${stone.glowColor})`
-                      : `drop-shadow(0 0 8px ${stone.glowColor})`,
+                      ? `drop-shadow(0 0 16px ${stone.glowColor})`
+                      : `drop-shadow(0 0 6px ${stone.glowColor})`,
                     transform: isActive ? 'scale(1.15)' : 'scale(1.0)',
                   }}
                 >
