@@ -4,6 +4,7 @@ import { CustomDropdown } from '../CustomDropdown';
 import { UserWatchData } from '../../types';
 import { ShieldUpdatesLedger, renderLogValue } from './UpdatesDetails';
 import { SessionRegistryCodex } from './SessionDetails';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 export interface CacheProgress {
   isSyncing: boolean;
@@ -139,6 +140,8 @@ export function ProfileTab({
   const [isDurationHHMMSS, setIsDurationHHMMSS] = React.useState(false);
   const [profileDetailModal, setProfileDetailModal] = React.useState<{ title: string; label: string; value: string } | null>(null);
   const [copiedDetail, setCopiedDetail] = React.useState(false);
+
+  useBodyScrollLock(!!profileDetailModal);
 
   const isProfileChanged = React.useMemo(() => {
     const trimmedNewName = newFullName.trim();
@@ -684,89 +687,50 @@ export function ProfileTab({
 
       {profileDetailModal && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className={`fixed inset-0 z-50 ${activeTheme.startsWith('light-') ? 'bg-slate-900/20 backdrop-blur-md' : 'bg-black/80 backdrop-blur-sm'} flex items-center justify-center p-4 animate-fadeIn`}
           onClick={() => setProfileDetailModal(null)}
           role="dialog"
           aria-modal="true"
           aria-label={`${profileDetailModal.title} Details`}
         >
           <div 
-            className={`w-full max-w-md rounded-2xl p-5 border shadow-2xl transition-all ${
+            className={`w-full max-w-md rounded-2xl p-6 shadow-2xl transition-all text-left max-h-[calc(100vh-2rem)] overflow-y-auto animate-scaleUp ${
               activeTheme.startsWith('light-')
-                ? 'bg-slate-50 border-slate-300 text-slate-900 shadow-slate-400/20'
-                : 'bg-neutral-900 border-neutral-800 text-neutral-100 shadow-black/60'
+                ? 'bg-white border border-slate-200 text-slate-900 shadow-slate-400/20'
+                : 'bg-neutral-950 border border-neutral-850 text-white shadow-black/60'
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={`flex items-center justify-between pb-3 border-b ${
-              activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-800/80'
-            }`}>
-              <div className="flex items-center gap-2">
-                {profileDetailModal.title === 'IP Address' ? (
-                  <Globe className="w-4 h-4 text-marvel shrink-0" />
-                ) : (
-                  <MapPin className="w-4 h-4 text-marvel shrink-0" />
-                )}
-                <h3 className="font-display font-bold text-sm tracking-wider uppercase">
-                  {profileDetailModal.title} Details
-                </h3>
-              </div>
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-neutral-200/10">
+              <h3 className={`font-display font-bold text-base sm:text-lg ${
+                activeTheme.startsWith('light-') ? 'text-slate-900' : 'text-white'
+              }`}>
+                {profileDetailModal.title} Details
+              </h3>
               <button
                 type="button"
                 onClick={() => setProfileDetailModal(null)}
                 className={`p-1 rounded-lg transition-colors cursor-pointer ${
                   activeTheme.startsWith('light-')
-                    ? 'text-slate-400 hover:text-slate-900 hover:bg-slate-200'
-                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+                    ? 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'
+                    : 'text-neutral-400 hover:text-white hover:bg-neutral-900/60'
                 }`}
                 aria-label="Close modal"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="py-4 flex flex-col gap-2 text-left">
-              <span className={`text-[10px] uppercase font-mono tracking-widest font-semibold ${
-                activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'
-              }`}>
-                {profileDetailModal.label}
-              </span>
-              <div className={`p-3.5 rounded-xl border font-mono text-xs sm:text-sm break-all font-bold select-all ${
-                activeTheme.startsWith('light-')
-                  ? 'bg-slate-100 border-slate-300 text-slate-900'
-                  : 'bg-neutral-950 border-neutral-800 text-neutral-100'
-              }`}>
-                {profileDetailModal.value}
-              </div>
-            </div>
-
-            <div className={`flex items-center justify-end gap-2 pt-3 border-t ${
-              activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-800/80'
-            }`}>
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(profileDetailModal.value);
-                  setCopiedDetail(true);
-                  setTimeout(() => setCopiedDetail(false), 2000);
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
-                  activeTheme.startsWith('light-')
-                    ? 'bg-slate-200 hover:bg-slate-300 text-slate-800'
-                    : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'
-                }`}
-              >
-                {copiedDetail ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedDetail ? 'Copied!' : 'Copy Value'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setProfileDetailModal(null)}
-                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-marvel hover:bg-red-700 text-white transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
+            <p className={`text-xs ${
+              activeTheme.startsWith('light-') ? 'text-slate-600' : 'text-neutral-400'
+            } font-sans leading-relaxed break-all`}>
+              {!(profileDetailModal.label === 'Client Public IP Address' || profileDetailModal.label === 'Approximate Geographic Location') ? (
+                <span className="mr-1">{profileDetailModal.label}:</span>
+              ) : null}
+              <strong className={`font-mono text-sm sm:text-base select-all ${
+                activeTheme.startsWith('light-') ? 'text-slate-900' : 'text-white'
+              }`}>{profileDetailModal.value}</strong>
+            </p>
           </div>
         </div>
       )}

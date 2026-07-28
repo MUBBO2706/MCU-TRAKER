@@ -5,6 +5,7 @@ import autoTable from 'jspdf-autotable';
 import { CustomDropdown } from '../CustomDropdown';
 import { CustomDatePicker } from '../Common/CustomDatePicker';
 import { ConfirmationModal } from '../Common/ConfirmationModal';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface SessionRegistryCodexProps {
   onBack: () => void;
@@ -61,6 +62,8 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
   // Detail Modal State for IP & Location full view
   const [selectedDetailModal, setSelectedDetailModal] = useState<{ title: string; label: string; value: string } | null>(null);
   const [copiedState, setCopiedState] = useState(false);
+
+  useBodyScrollLock(!!selectedDetailModal);
 
   const formatDuration = (seconds: number | null | undefined) => {
     if (seconds == null) return 'Ongoing';
@@ -1211,89 +1214,50 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
 
       {selectedDetailModal && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className={`fixed inset-0 z-50 ${activeTheme.startsWith('light-') ? 'bg-slate-900/20 backdrop-blur-md' : 'bg-black/80 backdrop-blur-sm'} flex items-center justify-center p-4 animate-fadeIn`}
           onClick={() => setSelectedDetailModal(null)}
           role="dialog"
           aria-modal="true"
           aria-label={`${selectedDetailModal.title} Details`}
         >
           <div 
-            className={`w-full max-w-md rounded-2xl p-5 border shadow-2xl transition-all ${
+            className={`w-full max-w-md rounded-2xl p-6 shadow-2xl transition-all text-left max-h-[calc(100vh-2rem)] overflow-y-auto animate-scaleUp ${
               activeTheme.startsWith('light-')
-                ? 'bg-slate-50 border-slate-300 text-slate-900 shadow-slate-400/20'
-                : 'bg-neutral-900 border-neutral-800 text-neutral-100 shadow-black/60'
+                ? 'bg-white border border-slate-200 text-slate-900 shadow-slate-400/20'
+                : 'bg-neutral-950 border border-neutral-850 text-white shadow-black/60'
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={`flex items-center justify-between pb-3 border-b ${
-              activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-800/80'
-            }`}>
-              <div className="flex items-center gap-2">
-                {selectedDetailModal.title === 'IP Address' ? (
-                  <Globe className="w-4 h-4 text-marvel shrink-0" />
-                ) : (
-                  <MapPin className="w-4 h-4 text-marvel shrink-0" />
-                )}
-                <h3 className="font-display font-bold text-sm tracking-wider uppercase">
-                  {selectedDetailModal.title} Details
-                </h3>
-              </div>
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-neutral-200/10">
+              <h3 className={`font-display font-bold text-base sm:text-lg ${
+                activeTheme.startsWith('light-') ? 'text-slate-900' : 'text-white'
+              }`}>
+                {selectedDetailModal.title} Details
+              </h3>
               <button
                 type="button"
                 onClick={() => setSelectedDetailModal(null)}
                 className={`p-1 rounded-lg transition-colors cursor-pointer ${
                   activeTheme.startsWith('light-')
-                    ? 'text-slate-400 hover:text-slate-900 hover:bg-slate-200'
-                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+                    ? 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'
+                    : 'text-neutral-400 hover:text-white hover:bg-neutral-900/60'
                 }`}
                 aria-label="Close modal"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="py-4 flex flex-col gap-2 text-left">
-              <span className={`text-[10px] uppercase font-mono tracking-widest font-semibold ${
-                activeTheme.startsWith('light-') ? 'text-slate-500' : 'text-neutral-400'
-              }`}>
-                {selectedDetailModal.label}
-              </span>
-              <div className={`p-3.5 rounded-xl border font-mono text-xs sm:text-sm break-all font-bold select-all ${
-                activeTheme.startsWith('light-')
-                  ? 'bg-slate-100 border-slate-300 text-slate-900'
-                  : 'bg-neutral-950 border-neutral-800 text-neutral-100'
-              }`}>
-                {selectedDetailModal.value}
-              </div>
-            </div>
-
-            <div className={`flex items-center justify-end gap-2 pt-3 border-t ${
-              activeTheme.startsWith('light-') ? 'border-slate-200' : 'border-neutral-800/80'
-            }`}>
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(selectedDetailModal.value);
-                  setCopiedState(true);
-                  setTimeout(() => setCopiedState(false), 2000);
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
-                  activeTheme.startsWith('light-')
-                    ? 'bg-slate-200 hover:bg-slate-300 text-slate-800'
-                    : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'
-                }`}
-              >
-                {copiedState ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedState ? 'Copied!' : 'Copy Value'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedDetailModal(null)}
-                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-marvel hover:bg-red-700 text-white transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
+            <p className={`text-xs ${
+              activeTheme.startsWith('light-') ? 'text-slate-600' : 'text-neutral-400'
+            } font-sans leading-relaxed break-all`}>
+              {!(selectedDetailModal.label === 'Client Public IP Address' || selectedDetailModal.label === 'Approximate Geographic Location') ? (
+                <span className="mr-1">{selectedDetailModal.label}:</span>
+              ) : null}
+              <strong className={`font-mono text-sm sm:text-base select-all ${
+                activeTheme.startsWith('light-') ? 'text-slate-900' : 'text-white'
+              }`}>{selectedDetailModal.value}</strong>
+            </p>
           </div>
         </div>
       )}
