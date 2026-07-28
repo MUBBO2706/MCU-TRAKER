@@ -182,8 +182,8 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
     const bgClass = isLight ? 'bg-white' : 'bg-neutral-950';
     return {
       buttonClass: `bg-transparent ${accentText} ${hoverText} transition-all duration-200 cursor-pointer font-mono rounded-xl px-1.5 py-1.5 text-[10px] sm:text-xs font-bold flex items-center gap-1.5 focus:outline-none focus:ring-0`,
-      dropdownClass: `absolute right-0 mt-1.5 w-48 rounded-xl ${bgClass} border ${baseBorder} z-50 py-0 overflow-hidden`,
-      dropdownItemClass: `w-full text-left bg-transparent ${accentText} ${hoverText} ${itemHoverBg} px-3.5 py-2.5 text-[10px] sm:text-xs transition-colors duration-150 flex items-center gap-2.5 cursor-pointer font-mono border-0`
+      dropdownClass: `absolute right-0 mt-1.5 min-w-[215px] rounded-xl ${bgClass} border ${baseBorder} z-50 py-0 overflow-hidden whitespace-nowrap`,
+      dropdownItemClass: `w-full text-left bg-transparent ${accentText} ${hoverText} ${itemHoverBg} px-3.5 py-2.5 text-[10px] sm:text-xs transition-colors duration-150 flex items-center gap-2.5 cursor-pointer font-mono border-0 whitespace-nowrap`
     };
   };
 
@@ -562,11 +562,24 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
 
   return (
     <div className="flex flex-col animate-fadeIn text-left gap-2 font-sans w-full py-1 px-1" id="session-registry-codex-expanded">
-      <div className="flex flex-col gap-1.5 md:gap-3 w-full text-left md:flex-row md:items-center md:justify-between z-40">
-        <div className="flex flex-col gap-1 text-left w-full md:w-auto">
-          <div className="flex items-center justify-between w-full md:w-auto md:justify-start md:gap-2">
+      <div className="flex flex-col gap-1.5 md:gap-3 w-full text-left md:flex-row md:items-center md:justify-between relative z-50">
+        <div className="flex flex-col gap-1 text-left w-full">
+          <div className="flex items-center justify-between w-full">
             <h2 className="font-display font-bold text-xl sm:text-2xl tracking-tight text-white flex items-center gap-2">
-              <Eye className={`${themeStyles.marvelIcon} w-5 h-5 sm:w-6 sm:h-6`} />
+              <Eye className={`md:hidden ${themeStyles.marvelIcon} w-5 h-5 sm:w-6 sm:h-6`} />
+              <button
+                type="button"
+                onClick={onBack}
+                aria-label="Back to profile"
+                title="Back"
+                className={`hidden md:inline-flex p-1 -ml-1 rounded-lg ${
+                  activeTheme.startsWith('light-')
+                    ? 'text-slate-600 hover:text-red-600'
+                    : 'text-neutral-400 hover:text-red-500'
+                } cursor-pointer transition-colors items-center justify-center`}
+              >
+                <ChevronLeft className="w-6 h-6 shrink-0" />
+              </button>
               Sessions
             </h2>
 
@@ -575,20 +588,23 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
               <button
                 type="button"
                 onClick={() => setShowMoreDropdown(!showMoreDropdown)}
-                className={`bg-transparent border-0 outline-none shadow-none focus:outline-none focus:ring-0 ${
-                  activeTheme.startsWith('light-') ? 'text-slate-700 hover:text-red-600' : 'text-neutral-300 hover:text-marvel'
-                } px-2 py-1 text-xs font-mono font-medium flex items-center gap-1.5 cursor-pointer transition-colors`}
+                aria-label="More options"
+                title="More options"
+                className={`p-1 bg-transparent border-0 outline-none shadow-none focus:outline-none focus:ring-0 ${
+                  activeTheme.startsWith('light-')
+                    ? 'text-slate-600 hover:text-red-600'
+                    : 'text-neutral-400 hover:text-red-500'
+                } cursor-pointer transition-colors flex items-center justify-center`}
               >
-                <span>More</span>
-                <MoreVertical className="w-3.5 h-3.5 shrink-0" />
+                <MoreVertical className="w-5 h-5 shrink-0" />
               </button>
 
               {showMoreDropdown && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowMoreDropdown(false)} />
-                  <div className={`absolute right-0 mt-2 w-52 rounded-xl ${
+                  <div className={`absolute right-0 mt-2 min-w-[215px] rounded-xl ${
                     activeTheme.startsWith('light-') ? 'bg-white border-slate-300' : 'bg-neutral-950 border-neutral-800'
-                  } border z-50 py-1 shadow-xl text-left font-mono text-xs overflow-visible`}>
+                  } border z-50 py-1 shadow-xl text-left font-mono text-xs overflow-visible whitespace-nowrap`}>
                     {/* Tail / Callout triangle pointing up directly at the vertical three-dots icon */}
                     <div className={`absolute -top-1.5 right-[9px] w-3 h-3 rotate-45 border-t border-l ${
                       activeTheme.startsWith('light-') ? 'bg-white border-slate-300' : 'bg-neutral-950 border-neutral-800'
@@ -616,7 +632,7 @@ export const SessionRegistryCodex: React.FC<SessionRegistryCodexProps> = ({
                         className={exportStyles.dropdownItemClass}
                       >
                         <Table className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
-                        <span>Export as CSV / Excel</span>
+                        <span>Export as Excel</span>
                       </button>
 
                       {/* Separator between action groups */}

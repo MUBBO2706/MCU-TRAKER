@@ -630,12 +630,6 @@ export function DashboardTab({
                   </button>
                 </div>
               </div>
-
-              {nextRecommendation.importantNotes && (
-                <div className="bg-neutral-900/60 p-3 rounded-xl border border-neutral-800 text-[11px] text-neutral-300 italic leading-relaxed">
-                  💡 <span className="font-semibold not-italic text-marvel">Important:</span> {nextRecommendation.importantNotes}
-                </div>
-              )}
             </div>
           )}
 

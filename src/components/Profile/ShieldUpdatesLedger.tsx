@@ -258,8 +258,8 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
     const bgClass = isLight ? 'bg-white' : 'bg-neutral-950';
     return {
       buttonClass: `bg-transparent ${accentText} ${hoverText} transition-all duration-200 cursor-pointer font-mono rounded-xl px-1.5 py-1.5 text-[10px] sm:text-xs font-bold flex items-center gap-1.5 focus:outline-none focus:ring-0`,
-      dropdownClass: `absolute right-0 mt-1.5 w-48 rounded-xl ${bgClass} border ${baseBorder} z-50 py-0 overflow-hidden`,
-      dropdownItemClass: `w-full text-left bg-transparent ${accentText} ${hoverText} ${itemHoverBg} px-3.5 py-2.5 text-[10px] sm:text-xs transition-colors duration-150 flex items-center gap-2.5 cursor-pointer font-mono border-0`
+      dropdownClass: `absolute right-0 mt-1.5 min-w-[200px] rounded-xl ${bgClass} border ${baseBorder} z-50 py-0 overflow-hidden whitespace-nowrap`,
+      dropdownItemClass: `w-full text-left bg-transparent ${accentText} ${hoverText} ${itemHoverBg} px-3.5 py-2.5 text-[10px] sm:text-xs transition-colors duration-150 flex items-center gap-2.5 cursor-pointer font-mono border-0 whitespace-nowrap`
     };
   };
 
@@ -706,7 +706,20 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
           {/* Row 1 on mobile: Header (left) and Export Button (right) */}
           <div className="flex items-center justify-between w-full md:w-auto md:justify-start md:gap-2">
             <h2 className="font-display font-bold text-xl sm:text-2xl tracking-tight text-white flex items-center gap-2">
-              <Database className={`${themeStyles.marvelIcon} w-5 h-5 sm:w-6 sm:h-6 animate-pulse`} />
+              <Database className={`md:hidden ${themeStyles.marvelIcon} w-5 h-5 sm:w-6 sm:h-6 animate-pulse`} />
+              <button
+                type="button"
+                onClick={onBack}
+                aria-label="Back to profile"
+                title="Back"
+                className={`hidden md:inline-flex p-1 -ml-1 rounded-lg ${
+                  activeTheme.startsWith('light-')
+                    ? 'text-slate-600 hover:text-red-600'
+                    : 'text-neutral-400 hover:text-red-500'
+                } cursor-pointer transition-colors items-center justify-center`}
+              >
+                <ChevronLeft className="w-6 h-6 shrink-0" />
+              </button>
               Updates
             </h2>
 
@@ -743,7 +756,7 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
                       className={exportStyles.dropdownItemClass}
                     >
                       <Table className="w-3.5 h-3.5 shrink-0" />
-                      <span>Export as CSV / Excel</span>
+                      <span>Export as Excel</span>
                     </button>
                   </div>
                 </>
@@ -771,7 +784,7 @@ export const ShieldUpdatesLedger: React.FC<ShieldUpdatesLedgerProps> = ({
             className={exportStyles.buttonClass}
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export CSV / Excel</span>
+            <span>Export Excel</span>
           </button>
         </div>
       </div>

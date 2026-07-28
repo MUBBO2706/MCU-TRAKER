@@ -1864,7 +1864,7 @@ export default function App() {
   return (
     <div className={`min-h-screen bg-gradient-to-b ${getThemeClass()} theme-${activeTheme} ${isLightMode ? 'theme-light light' : 'theme-dark dark'} flex flex-col relative overflow-x-hidden transition-all duration-500`} style={{ minHeight: '100dvh' }}>
       {/* S.H.I.E.L.D. Floating Logo Header */}
-      <header className={`fixed top-0 left-0 right-0 z-40 backdrop-blur-md border-b px-4 py-3 md:py-3.5 flex items-center shadow-md h-14 md:h-16 ${
+      <header className={`fixed top-0 left-0 right-0 z-[100] backdrop-blur-md border-b px-4 py-3 md:py-3.5 flex items-center shadow-md h-14 md:h-16 ${
         isLightMode
           ? 'bg-white/90 border-slate-200/80 text-slate-900'
           : 'bg-black/85 border-neutral-900 text-white'
