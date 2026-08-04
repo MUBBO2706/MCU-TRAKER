@@ -60,7 +60,7 @@ router.post("/api/auth/register", async (req, res) => {
     // Parse user agent and ip location
     const uaInfo = telegramDb.parseUserAgent(req.headers["user-agent"]);
     const rawDevice = req.body.deviceModel || uaInfo.device;
-    const resolvedDeviceName = await resolveDeviceName(rawDevice);
+    const resolvedDeviceName = await resolveDeviceName(rawDevice, req);
     const finalDevice = resolvedDeviceName || rawDevice;
     const { ipAddress, location } = await resolveIpAndLocation(req);
 
@@ -264,7 +264,7 @@ router.post("/api/auth/login", async (req, res) => {
     const sessionId = crypto.randomUUID();
     const uaInfo = telegramDb.parseUserAgent(req.headers["user-agent"]);
     const rawDevice = req.body.deviceModel || uaInfo.device;
-    const resolvedDeviceName = await resolveDeviceName(rawDevice);
+    const resolvedDeviceName = await resolveDeviceName(rawDevice, req);
     const finalDevice = resolvedDeviceName || rawDevice;
     const { ipAddress, location } = await resolveIpAndLocation(req);
 
