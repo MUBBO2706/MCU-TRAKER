@@ -33,9 +33,11 @@ export async function resolveDeviceName(model: string): Promise<string | null> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-origin': process.env.APP_DOMAIN || 'mcu-tracker.vercel.app',
       },
       body: JSON.stringify({
         model: cleanModel,
+        domain: process.env.APP_DOMAIN || 'mcu-tracker.vercel.app',
         skipCache: false,
       }),
       signal: controller.signal,
