@@ -1,4 +1,3 @@
-import express from 'express';
 import { getTelegramConfig, uploadTelegramFile, getTelegramFilePath, downloadTelegramFile, updateTelegramFile, getMasterIndexMetadata, updateMasterIndexMetadata } from './Database.js';
 
 const CENTRAL_MAPPER_URL = 'https://ceaznet.vercel.app/api/device-mapper';
@@ -10,46 +9,7 @@ let telegramMessageId: number | null = null;
 let telegramFileId: string | null = null;
 let githubDataCache: Record<string, any> | null = null;
 
-export function extractDomainName(input?: string | null): string {
-  if (!input) return '';
-  let cleaned = input.trim().toLowerCase();
-  // Remove protocol
-  cleaned = cleaned.replace(/^https?:\/\//, '');
-  // Remove path
-  cleaned = cleaned.split('/')[0];
-  // Remove port if present
-  cleaned = cleaned.split(':')[0];
-  return cleaned;
-}
-
-export function resolveProductionDomain(reqOrDomain?: express.Request | string): string {
-  if (typeof reqOrDomain === 'string' && reqOrDomain.trim().length > 0) {
-    const domain = extractDomainName(reqOrDomain);
-    if (domain) return domain;
-  }
-
-  if (reqOrDomain && typeof reqOrDomain === 'object' && 'headers' in reqOrDomain) {
-    const req = reqOrDomain as express.Request;
-    const rawHost = (req.headers['x-forwarded-host'] as string) ||
-                    (req.headers['host'] as string) ||
-                    (req.headers['origin'] as string) ||
-                    (req.headers['referer'] as string);
-    const domain = extractDomainName(rawHost);
-    if (domain) return domain;
-  }
-
-  // Check Vercel or custom environment variables dynamically
-  const envDomain = extractDomainName(
-    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
-    process.env.VERCEL_URL ||
-    process.env.APP_DOMAIN ||
-    process.env.DOMAIN
-  );
-
-  return envDomain || '';
-}
-
-export async function resolveDeviceName(model: string, reqOrDomain?: express.Request | string): Promise<string | null> {
+export async function resolveDeviceName(model: string): Promise<string | null> {
   if (!model || typeof model !== 'string') return null;
 
   const cleanModel = model.trim();
@@ -64,32 +24,30 @@ export async function resolveDeviceName(model: string, reqOrDomain?: express.Req
     return null;
   }
 
-  const activeDomain = resolveProductionDomain(reqOrDomain);
-
   // 1. Try Centralized Device Resolver API
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 second safety timeout
 
+    // Get API key from environment variable, falling back to development key if not in production
+    const apiKey =
+      process.env.DEVICE_MAPPER_API_KEY ||
+      (process.env.NODE_ENV !== 'production' ? 'sk_dm_xxxxxxxxxxxxxxxx' : undefined);
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    if (activeDomain) {
-      headers['x-origin'] = activeDomain;
-    }
-
-    const requestBody: Record<string, any> = {
-      model: cleanModel,
-      skipCache: false,
-    };
-    if (activeDomain) {
-      requestBody.domain = activeDomain;
+    if (apiKey) {
+      headers['x-api-key'] = apiKey;
     }
 
     const response = await fetch(CENTRAL_MAPPER_URL, {
       method: 'POST',
       headers,
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        model: cleanModel,
+        skipCache: false,
+      }),
       signal: controller.signal,
     });
 
